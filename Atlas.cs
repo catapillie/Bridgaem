@@ -11,7 +11,7 @@ public static class Atlas
     {
         foreach (var path in Directory.EnumerateFiles(atlasPrefix, "*.*", searchOption: SearchOption.AllDirectories))
         {
-            string name = Path.ChangeExtension(path[atlasPrefix.Length..^4], null);
+            string name = Path.ChangeExtension(path[atlasPrefix.Length..^4], null).Replace('\\', '/');
             images.Add(name, new Subtexture(new Texture(device, new Image(path))));
         }
     }

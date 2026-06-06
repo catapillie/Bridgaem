@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace Bridgaem
 {
-    public abstract class PhysicsEntity : Entity
+    public class PhysicsEntity : Entity
     {
         public B2BodyId BodyId;
 
@@ -59,7 +59,7 @@ namespace Bridgaem
             if (userdata is Color c)
                 color = c;
 
-            Game.Batch.Circle(new Circle(0, 0, circle.radius), 1, color);
+            Game.Batch.Circle(new Circle(0, 0, circle.radius), 300, color);
         }
 
         public override void Render()
@@ -94,6 +94,12 @@ namespace Bridgaem
             }
 
             Game.Batch.PopMatrix();
+        }
+
+        public override void Destroy()
+        {
+            base.Destroy();
+            B2Bodies.b2DestroyBody(BodyId);
         }
     }
 }

@@ -8,5 +8,7 @@
         public virtual void Update() { }
 
         public virtual void Render() { }
+
+        public virtual void Destroy() { }
     }
 }

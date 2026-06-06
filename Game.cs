@@ -8,6 +8,7 @@ namespace Bridgaem;
 
 public class Game : App
 {
+    public static Game Instance { get; private set; }
     public static Batcher Batch { get; private set; } = null!;
     private readonly Renderer imRenderer;
 
@@ -35,6 +36,7 @@ public class Game : App
         UpdateMode = UpdateMode.FixedStep(fps),
     })
     {
+        Instance = this;
         Batch = new(GraphicsDevice);
         imRenderer = new(this);
 
@@ -96,26 +98,16 @@ public class Game : App
             }
         }
 
-        Instantiate(new GameBox(new Vector2(0, 10), 256, 5, Calc.DegToRad * 40, B2BodyType.b2_kinematicBody));
-        for (int i = 1; i <= 20; i++)
-            Instantiate(new GameBox(new Vector2(0, -10), 2, 2, 0, B2BodyType.b2_dynamicBody));
+        Instantiate(new GameBox(new Vector2(0, 10), 256, 5, Calc.DegToRad * 0, B2BodyType.b2_kinematicBody));
+        /*for (int i = 1; i <= 20; i++)
+            Instantiate(new GameBox(new Vector2(0, -10), 2, 2, 0, B2BodyType.b2_dynamicBody));*/
+
+        Instantiate(new Player(new Vector2()));
     }
 
     protected override void Shutdown()
     {
         imRenderer.Dispose();
-    }
-
-    private void UpdateImGui()
-    {
-        imRenderer.BeginLayout();
-
-        if (imRenderer.WantsTextInput)
-            Window.StartTextInput();
-        else
-            Window.StopTextInput();
-
-        imRenderer.EndLayout();
     }
 
     public static void Instantiate(Entity entity)
@@ -125,12 +117,16 @@ public class Game : App
 
     public static void Destroy(Entity entity)
     {
+        entity.Destroy();
         entities.Remove(entity);
     }
 
     protected override void Update()
     {
+        imRenderer.BeginLayout();
+
         Dt = Time.Delta;
+
 
         if (Input.Keyboard.Down(Keys.Right))
             Camera += Vector2.UnitX * 50 * Dt;
@@ -154,7 +150,12 @@ public class Game : App
 
         B2Worlds.b2World_Step(WorldId, physicsDt, physicsSubsteps);
 
-        UpdateImGui();
+        if (imRenderer.WantsTextInput)
+            Window.StartTextInput();
+        else
+            Window.StopTextInput();
+
+        imRenderer.EndLayout();
     }
 
     protected override void Render()

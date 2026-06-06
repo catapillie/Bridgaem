@@ -14,4 +14,16 @@
     <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="assets\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="assets\img\bg\cloud01.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
