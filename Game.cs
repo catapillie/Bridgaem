@@ -1,22 +1,24 @@
-using System.Numerics;
 using Box2D.NET;
+using Bridgaem.BaseEntity;
 using Foster.Framework;
 using FosterImGui;
+using System.Numerics;
 
 namespace Bridgaem;
 
 public class Game : App
 {
-    private readonly Batcher batch;
+    public static Batcher Batch { get; private set; } = null!;
     private readonly Renderer imRenderer;
 
     private readonly B2WorldDef worldDef;
-    private readonly B2WorldId worldId;
+    public static B2WorldId WorldId { get; private set; }
 
-    private B2BodyId dynBodyId;
+    private static List<Entity> entities = new();
 
     private const int fps = 60;
     private const float dt = 1.0f / fps;
+    private const int substeps = 4;
 
 
     public Game() : base(new AppConfig()
@@ -28,37 +30,19 @@ public class Game : App
         UpdateMode = UpdateMode.FixedStep(fps), // 60 fps
     })
     {
-        batch = new(GraphicsDevice);
+        Batch = new(GraphicsDevice);
         imRenderer = new(this);
 
         worldDef = B2Types.b2DefaultWorldDef();
-        worldDef.gravity = new(0f, -1f);
+        worldDef.gravity = new(0f, 9.81f);
 
-        worldId = B2Worlds.b2CreateWorld(worldDef);
+        WorldId = B2Worlds.b2CreateWorld(worldDef);
     }
 
     protected override void Startup()
     {
-        // ground
-        B2BodyDef groundBodyDef = B2Types.b2DefaultBodyDef();
-        groundBodyDef.position = new(0, -10);
-        B2BodyId groundBodyId = B2Bodies.b2CreateBody(worldId, groundBodyDef);
-        B2Polygon groundBox = B2Geometries.b2MakeBox(50, 5);
-        B2ShapeDef groundShapeDef = B2Types.b2DefaultShapeDef();
-        B2Shapes.b2CreatePolygonShape(groundBodyId, groundShapeDef, groundBox);
-
-        // shape
-        B2BodyDef bodyDef = B2Types.b2DefaultBodyDef();
-        bodyDef.type = B2BodyType.b2_dynamicBody;
-        bodyDef.position = new(0f, 4f);
-        bodyDef.rotation = B2MathFunction.b2MakeRot(float.Pi / 8);
-        B2BodyId bodyId = B2Bodies.b2CreateBody(worldId, bodyDef);
-        B2Polygon dynamicBox = B2Geometries.b2MakeBox(1.0f, 1.0f);
-        B2ShapeDef shapeDef = B2Types.b2DefaultShapeDef();
-        shapeDef.density = 1.0f;
-        shapeDef.material.friction = 0.3f;
-        B2Shapes.b2CreatePolygonShape(bodyId, shapeDef, dynamicBox);
-        dynBodyId = bodyId;
+        Instantiate(new GameBox(new Vector2(0, 0), 256, 5, Calc.DegToRad * 45, B2BodyType.b2_kinematicBody));
+        Instantiate(new GameBox(new Vector2(0, -10), 2, 2, 0, B2BodyType.b2_dynamicBody));
     }
 
     protected override void Shutdown()
@@ -78,17 +62,25 @@ public class Game : App
         imRenderer.EndLayout();
     }
 
+    public static void Instantiate(Entity entity)
+    {
+        entities.Add(entity);
+    }
+
+    public static void Destroy(Entity entity)
+    {
+        entities.Remove(entity);
+    }
+
     protected override void Update()
     {
         if (Input.Keyboard.Down(Keys.Escape))
             Exit();
 
-        const int substeps = 4;
-        B2Worlds.b2World_Step(worldId, dt, substeps);
-        var bodyPos = B2Bodies.b2Body_GetPosition(dynBodyId);
-        var bodyRot = B2Bodies.b2Body_GetRotation(dynBodyId);
-        float bodyAngle = float.Atan2(bodyRot.c, bodyRot.s);
-        Console.WriteLine($"{bodyPos.X} {bodyPos.Y} {bodyAngle}");
+        foreach (Entity entity in entities)
+            entity.Update();
+
+        B2Worlds.b2World_Step(WorldId, dt, substeps);
 
         UpdateImGui();
     }
@@ -97,19 +89,15 @@ public class Game : App
     {
         Window.Clear(Color.Black);
 
-        batch.PushMatrix(new(1280 / 2, 720 / 2), new(50, -50), 0f);
+        Batch.PushMatrix(new(1280 / 2, 720 / 2), new(5, 5), 0f);
         {
-            var bodyPos = B2Bodies.b2Body_GetPosition(dynBodyId);
-            var bodyRot = B2Bodies.b2Body_GetRotation(dynBodyId);
-            float bodyAngle = float.Atan2(bodyRot.c, bodyRot.s);
-            batch.PushMatrix(new(bodyPos.X, bodyPos.Y), Vector2.One, bodyAngle);
-            batch.Rect(0, 0, 2, 2, Color.Red);
-            batch.PopMatrix();
+            foreach (Entity entity in entities)
+                entity.Render();
         }
-        batch.PopMatrix();
+        Batch.PopMatrix();
 
-        batch.Render(Window);
-        batch.Clear();
+        Batch.Render(Window);
+        Batch.Clear();
 
         imRenderer.Render();
     }
