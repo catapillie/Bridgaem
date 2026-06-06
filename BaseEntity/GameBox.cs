@@ -9,7 +9,7 @@ namespace Bridgaem.BaseEntity
         {
             B2Bodies.b2Body_SetTransform(BodyId, new B2Vec2(pos.X, pos.Y), B2MathFunction.b2MakeRot(rotation));
             B2Bodies.b2Body_SetType(BodyId, bodyType);
-            AddDefaultBox(w / 2, h / 2);
+            AddDefaultBox(w / 2, h / 2, friction: 0.8f);
         }
     }
 }

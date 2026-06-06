@@ -3,6 +3,7 @@ using Bridgaem.BaseEntity;
 using Foster.Framework;
 using FosterImGui;
 using System.Numerics;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Bridgaem;
 
@@ -14,11 +15,14 @@ public class Game : App
     private readonly B2WorldDef worldDef;
     public static B2WorldId WorldId { get; private set; }
 
-    private static List<Entity> entities = new();
+    private static readonly List<Entity> entities = [];
 
     private const int fps = 60;
     private const float dt = 1.0f / fps;
     private const int substeps = 4;
+
+    public static float Dt { get; private set; } = 1.0f / fps;
+
 
 
     public Game() : base(new AppConfig()
@@ -27,7 +31,7 @@ public class Game : App
         WindowTitle = "WESH BRIDGE",
         Width = 1280,
         Height = 720,
-        UpdateMode = UpdateMode.FixedStep(fps), // 60 fps
+        UpdateMode = UpdateMode.FixedStep(fps),
     })
     {
         Batch = new(GraphicsDevice);
@@ -41,8 +45,46 @@ public class Game : App
 
     protected override void Startup()
     {
-        Instantiate(new GameBox(new Vector2(0, 0), 256, 5, Calc.DegToRad * 45, B2BodyType.b2_kinematicBody));
-        Instantiate(new GameBox(new Vector2(0, -10), 2, 2, 0, B2BodyType.b2_dynamicBody));
+        Atlas.Load(GraphicsDevice);
+
+        {// bg
+            const int layerCount = 6;
+            Subtexture[] backmountains = [Atlas.Get("bg/mountain_back01"), Atlas.Get("bg/mountain_back02")];
+            Subtexture[] mountains = [Atlas.Get("bg/mountain01"), Atlas.Get("bg/mountain02"), Atlas.Get("bg/mountain03")];
+            Subtexture[] clouds = [Atlas.Get("bg/cloud01"), Atlas.Get("bg/cloud02"), Atlas.Get("bg/cloud03")];
+
+            for (float x = -1000; x <= 1000; x += 60f)
+            {
+                int layer = layerCount;
+                var tex = backmountains[Random.Shared.Next(backmountains.Length)];
+                Instantiate(new Parallax(0.5f, 0.0f, tex, Color.White) { X = x - layer * 20, Y = 30 - layer * 5 });
+            }
+
+            for (int layer = layerCount - 1; layer >= 0; layer -= 1)
+            {
+                for (float x = -1000; x <= 1000; x += 120)
+                {
+                    var tex = clouds[Random.Shared.Next(clouds.Length)];
+                    float scroll = (1 + layer) / 2f;
+                    Instantiate(new Parallax(0.5f, scroll, tex, Color.White * 0.2f) { X = x - layer * 20, Y = 30 + layer * 5 });
+                }
+
+                Color color = Color.White;
+                color.R = (byte)(color.R * float.Pow(0.8f, layer));
+                color.G = (byte)(color.G * float.Pow(0.8f, layer));
+                color.B = (byte)(color.B * float.Pow(0.9f, layer));
+                for (float x = -1000; x <= 1000; x += 60f)
+                {
+                    var tex = mountains[Random.Shared.Next(mountains.Length)];
+                    Instantiate(new Parallax(0.5f, 0.0f, tex, color) { X = x - layer * 20, Y = 30 - layer * 5 });
+                }
+
+            }
+        }
+
+        Instantiate(new GameBox(new Vector2(0, 10), 256, 5, Calc.DegToRad * 40, B2BodyType.b2_kinematicBody));
+        for (int i = 1; i <= 10; i++)
+            Instantiate(new GameBox(new Vector2(0, -10), 2, 2, 0, B2BodyType.b2_dynamicBody));
     }
 
     protected override void Shutdown()
@@ -74,6 +116,8 @@ public class Game : App
 
     protected override void Update()
     {
+        Dt = Time.Delta;
+
         if (Input.Keyboard.Down(Keys.Escape))
             Exit();
 
@@ -87,9 +131,12 @@ public class Game : App
 
     protected override void Render()
     {
-        Window.Clear(Color.Black);
+        Window.Clear(Color.SkyBlue);
 
-        Batch.PushMatrix(new(1280 / 2, 720 / 2), new(5, 5), 0f);
+        float t = (float)Time.Elapsed.TotalSeconds / 2f;
+        System.Console.WriteLine(t);
+        float scale = 1 + Ease.Bounce.Out(float.Abs(2 * (t % 1f) - 1)) * 10;
+        Batch.PushMatrix(new(1280 / 2, 720 / 2), Vector2.One * 5 * scale, 0f);
         {
             foreach (Entity entity in entities)
                 entity.Render();

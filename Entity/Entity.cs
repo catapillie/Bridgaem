@@ -3,8 +3,7 @@
     public abstract class Entity
     {
         public Entity()
-        {
-        }
+        { }
 
         public virtual void Update() { }
 
