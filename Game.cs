@@ -27,6 +27,8 @@ public class Game : App
     public static float Zoom { get; set; } = 1.0f;
     public static float BaseZoom = 20.0f; // pixels/meter
 
+    private Player player;
+
     public Game() : base(new AppConfig()
     {
         ApplicationName = "Bridgaem",
@@ -99,10 +101,9 @@ public class Game : App
         }
 
         Instantiate(new GameBox(new Vector2(0, 10), 256, 5, Calc.DegToRad * 0, B2BodyType.b2_kinematicBody));
-        /*for (int i = 1; i <= 20; i++)
-            Instantiate(new GameBox(new Vector2(0, -10), 2, 2, 0, B2BodyType.b2_dynamicBody));*/
+        Instantiate(new GameBox(new Vector2(10, 10), 30, 5, Calc.DegToRad * -40, B2BodyType.b2_kinematicBody));
 
-        Instantiate(new Player(new Vector2()));
+        Instantiate(player = new Player(new Vector2()));
     }
 
     protected override void Shutdown()
@@ -127,15 +128,15 @@ public class Game : App
 
         Dt = Time.Delta;
 
-
-        if (Input.Keyboard.Down(Keys.Right))
-            Camera += Vector2.UnitX * 50 * Dt;
-        else if (Input.Keyboard.Down(Keys.Left))
-            Camera -= Vector2.UnitX * 50 * Dt;
-        if (Input.Keyboard.Down(Keys.Down))
-            Camera += Vector2.UnitY * 50 * Dt;
-        else if (Input.Keyboard.Down(Keys.Up))
-            Camera -= Vector2.UnitY * 50 * Dt;
+        if (player is not null)
+        {
+            float targetX = player.ChassisPos.X;
+            const float movementOffset = 20;
+            if (Input.Keyboard.Down(Keys.A)) targetX -= movementOffset;
+            else if (Input.Keyboard.Down(Keys.D)) targetX += movementOffset;
+            float dist = targetX - Camera.X;
+            Camera += Vector2.UnitX * dist * float.Exp(-200 * Dt);
+        }
 
         if (Input.Keyboard.Down(Keys.O))
             Zoom *= float.Pow(0.5f, Dt);
