@@ -133,10 +133,7 @@ public class Game : App
     {
         Window.Clear(Color.SkyBlue);
 
-        float t = (float)Time.Elapsed.TotalSeconds / 2f;
-        System.Console.WriteLine(t);
-        float scale = 1 + Ease.Bounce.Out(float.Abs(2 * (t % 1f) - 1)) * 10;
-        Batch.PushMatrix(new(1280 / 2, 720 / 2), Vector2.One * 5 * scale, 0f);
+        Batch.PushMatrix(new(1280 / 2, 720 / 2), Vector2.One * 5, 0f);
         {
             foreach (Entity entity in entities)
                 entity.Render();
