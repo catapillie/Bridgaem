@@ -1,3 +1,4 @@
+using System.Numerics;
 using Foster.Framework;
 
 namespace Bridgaem.BaseEntity;
@@ -19,6 +20,7 @@ public class Parallax(float factor, float scroll, Subtexture tex, Color color) :
 
     public override void Render()
     {
-        Game.Batch.ImageJustified(tex, new(X, Y), new(0.5f, 1.0f), 0.5f * Scale, color);
+        var pos = new Vector2(X + Game.Camera.X *(1-factor), Y);
+        Game.Batch.ImageJustified(tex, pos, new(0.5f, 1.0f), 0.5f * Scale, color);
     }
 }
