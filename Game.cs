@@ -315,6 +315,7 @@ public class Game : App
             bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
             if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position))
             {
+                PlaySound("./assets/sound/go.wav");
                 CurrentState = State.Playing;
                 Player.Respawn();
                 return;
@@ -414,6 +415,7 @@ public class Game : App
                 if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position))
                 {
                     CurrentState = State.Editing;
+                    PlaySound("./assets/sound/back.wav");
                     Player.Respawn();
                 }
             }
@@ -443,7 +445,7 @@ public class Game : App
                         hasCrossed = false;
                         CurrentState = State.Editing;
                         Score++;
-                        PlaySound("")
+                        PlaySound("./assets/sound/levelup.wav");
                         scoreLerp = 1f;
 
 
