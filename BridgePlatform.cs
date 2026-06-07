@@ -11,8 +11,12 @@ public class BridgePlatform : PhysicsEntity
     private readonly float width;
     private readonly float triggerHeight;
 
+    public Vector2 TargetPos { get; set; }
+
     public BridgePlatform(Vector2 pos)
     {
+        TargetPos = pos;
+
         B2Bodies.b2Body_SetTransform(BodyId, new B2Vec2(pos.X, pos.Y), B2MathFunction.b2MakeRot(0.0f));
         B2Bodies.b2Body_SetType(BodyId, B2BodyType.b2_kinematicBody);
 
@@ -20,7 +24,8 @@ public class BridgePlatform : PhysicsEntity
         scale = 0.25f;
 
         width = texture.Width * scale;
-        triggerHeight = texture.Height * scale; //azy on fait égale à la vraie height
+        triggerHeight = texture.Height * scale; // {F} azy on fait égale à la vraie height
+                                                // {L} a wise man once said ^
 
         AddDefaultBox(
             width / 2f,
@@ -28,10 +33,17 @@ public class BridgePlatform : PhysicsEntity
             friction: 0.8f);
     }
 
+    public override void Update()
+    {
+        B2Vec2 b2pos = B2Bodies.b2Body_GetPosition(BodyId);
+        Vector2 pos = new(b2pos.X, b2pos.Y);
+        Vector2 vel = (TargetPos - pos) * 0.5f;
+        B2Bodies.b2Body_SetLinearVelocity(BodyId, new(vel.X, vel.Y));
+        base.Update();
+    }
+
     public override void Render()
     {
-        // base.Render();
-
         B2Vec2 bodyPos = B2Bodies.b2Body_GetPosition(BodyId);
         B2Rot bodyRot = B2Bodies.b2Body_GetRotation(BodyId);
         float bodyAngle = float.Atan2(bodyRot.s, bodyRot.c);
@@ -46,7 +58,9 @@ public class BridgePlatform : PhysicsEntity
     {
         B2Vec2 bodyPos = B2Bodies.b2Body_GetPosition(BodyId);
 
-        Rect rect = new Rect(bodyPos.X - width / 2, bodyPos.Y - triggerHeight, width, triggerHeight);
+        const float widthPercent = 0.75f;
+        float w = width * widthPercent;
+        Rect rect = new(bodyPos.X - w / 2, bodyPos.Y - triggerHeight, w, triggerHeight);
 
         return rect.Contains(player.ChassisPos);
     }

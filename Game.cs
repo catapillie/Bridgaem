@@ -30,6 +30,29 @@ public class Game : App
     private Player player;
     private BridgePlatform leftPlat, rightPlat;
 
+    public enum Direction
+    {
+        Right,
+        Left,
+    }
+
+    public Direction CurrentDirection { get; private set; } = Direction.Right;
+
+    private const float SafeTime = 2f;
+    private float crossedTimer = 0.0f;
+    private bool hasCrossed = false;
+
+
+    enum PlacementKind
+    {
+        None,
+        Bridge,
+    }
+    private PlacementKind placementKind = PlacementKind.None;
+
+    public static SpriteFont Font { get; private set; } = null!;
+
+
     public Game() : base(new AppConfig()
     {
         ApplicationName = "Bridgaem",
@@ -47,6 +70,9 @@ public class Game : App
         worldDef.gravity = new(0f, 9.81f);
 
         WorldId = B2Worlds.b2CreateWorld(worldDef);
+
+        Font = new SpriteFont(GraphicsDevice,
+            new Font("assets/font/archivo_black.ttf"), 200f);
     }
 
     protected override void Startup()
@@ -114,8 +140,6 @@ public class Game : App
         Instantiate(leftPlat = new BridgePlatform(new(0, 40)));
         Instantiate(rightPlat = new BridgePlatform(new(40, 40)));
 
-        Instantiate(new Bridge(new(5, 40 - 5), new(40 - 5, 40 - 5), 100));
-
         Camera += Vector2.UnitX * 20;
         Camera += Vector2.UnitY * 30;
     }
@@ -136,6 +160,47 @@ public class Game : App
         entities.Remove(entity);
     }
 
+    private Vector2 bridgePlacementLeft, bridgePlacementRight;
+    private bool isPlacingBridge = false;
+    private void BridgePlacement()
+    {
+        if (isPlacingBridge)
+        {
+            bridgePlacementRight = ScreenToWorld(Input.Mouse.Position);
+
+            if (!Input.Mouse.LeftDown)
+            {
+                float len = Vector2.Distance(bridgePlacementLeft, bridgePlacementRight);
+                int tileCount = 1 + (int)len * 2;
+                Instantiate(new Bridge(bridgePlacementLeft, bridgePlacementRight, tileCount));
+                isPlacingBridge = false;
+                return;
+            }
+
+        }
+        else if (Input.Mouse.LeftDown)
+        {
+            bridgePlacementLeft = ScreenToWorld(Input.Mouse.Position);
+            isPlacingBridge = true;
+        }
+    }
+
+    private void HandlePlacements()
+    {
+        if (Input.Keyboard.Pressed(Keys.B))
+            placementKind = PlacementKind.Bridge;
+
+        switch (placementKind)
+        {
+            case PlacementKind.Bridge:
+                BridgePlacement();
+                return;
+
+            case PlacementKind.None:
+            default: return;
+        }
+    }
+
     protected override void Update()
     {
         imRenderer.BeginLayout();
@@ -144,7 +209,13 @@ public class Game : App
 
         if (player is not null)
         {
-            float targetX = player.ChassisPos.X + 20;
+            float dirOffset = hasCrossed ? 0 : CurrentDirection switch
+            {
+                Direction.Right => +1,
+                Direction.Left => -1,
+                _ => 0f
+            };
+            float targetX = player.ChassisPos.X + dirOffset * 20;
             const float movementOffset = 8;
             if (Input.Keyboard.Down(Keys.A)) targetX -= movementOffset;
             else if (Input.Keyboard.Down(Keys.D)) targetX += movementOffset;
@@ -160,17 +231,79 @@ public class Game : App
         if (Input.Keyboard.Down(Keys.Escape))
             Exit();
 
+        // placement  
+        HandlePlacements();
+
         foreach (Entity entity in entities)
             entity.Update();
 
-        B2Worlds.b2World_Step(WorldId, physicsDt, physicsSubsteps);
+        // gameplay loop
+        {
+            if (player is not null)
+            {
+                hasCrossed = CurrentDirection switch
+                {
+                    Direction.Right => rightPlat.IsDetected(player),
+                    Direction.Left => leftPlat.IsDetected(player),
+                    _ => false,
+                };
 
-        if (imRenderer.WantsTextInput)
-            Window.StartTextInput();
-        else
-            Window.StopTextInput();
+                if (hasCrossed)
+                {
+                    crossedTimer += Dt;
+                    if (crossedTimer >= SafeTime)
+                    {
+                        switch (CurrentDirection)
+                        {
+                            case Direction.Right:
+                                CurrentDirection = Direction.Left;
+                                crossedTimer = 0f;
+                                hasCrossed = false;
+                                leftPlat.TargetPos -= Vector2.UnitX * 40;
+                                break;
+                            case Direction.Left:
+                                CurrentDirection = Direction.Right;
+                                crossedTimer = 0f;
+                                hasCrossed = false;
+                                rightPlat.TargetPos += Vector2.UnitX * 40;
+                                break;
+                            default: break;
+                        }
+                    }
+                }
+                else
+                {
+                    crossedTimer = 0f;
+                }
+            }
 
-        imRenderer.EndLayout();
+
+            B2Worlds.b2World_Step(WorldId, physicsDt, physicsSubsteps);
+
+            if (imRenderer.WantsTextInput)
+                Window.StartTextInput();
+            else
+                Window.StopTextInput();
+
+            imRenderer.EndLayout();
+        }
+    }
+
+    private Vector2 ScreenToWorld(Vector2 pos)
+    {
+        pos -= Window.Size / 2;
+        pos /= Zoom * BaseZoom;
+        pos += Camera;
+        return pos;
+    }
+
+    private void RenderBridgePlacement()
+    {
+        if (!isPlacingBridge)
+            return;
+
+        float offset = (float)Time.Elapsed.TotalSeconds * 5f % 1f;
+        Batch.LineDashed(bridgePlacementLeft, bridgePlacementRight, 0.1f, Color.White, 1f, offset);
     }
 
     protected override void Render()
@@ -187,10 +320,32 @@ public class Game : App
             foreach (Entity entity in entities)
                 entity.Render();
 
+            // gizmos for placements
+            {
+                switch (placementKind)
+                {
+                    case PlacementKind.Bridge:
+                        RenderBridgePlacement(); break;
 
+                    case PlacementKind.None:
+                    default: break;
+                }
+            }
         }
         Batch.PopMatrix();
         Batch.PopMatrix();
+
+        if (hasCrossed)
+        {
+            Vector2 pos = new(Window.Width / 2, Window.Height * .25f);
+            string text = string.Format("{0:0.00}", Calc.Clamp(crossedTimer, 0.0f, SafeTime));
+            float t = Calc.Clamp(crossedTimer, 0.0f, SafeTime) / SafeTime;
+            float scale = Ease.Expo.Out(t);
+            Color color = Color.Lerp(Color.White, Color.Red, t);
+            Font.Draw(Batch, text, pos, new(.5f, .5f), 100 * scale * 1.2f, color * 0.25f);
+            Font.Draw(Batch, text, pos, new(.5f, .5f), 100 * scale * 1.1f, color * 0.5f);
+            Font.Draw(Batch, text, pos, new(.5f, .5f), 100 * scale, color);
+        }
 
         Batch.Render(Window);
         Batch.Clear();

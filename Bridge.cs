@@ -7,6 +7,8 @@ namespace Bridgaem;
 
 public class Bridge : Entity
 {
+    private readonly Subtexture tileTexture;
+
     private float frictionTorque;
     private float constraintHertz;
     private float constraintDampingRatio;
@@ -18,6 +20,8 @@ public class Bridge : Entity
 
     public Bridge(Vector2 left, Vector2 right, int count)
     {
+        tileTexture = Atlas.Get("bridge_tile");
+
         bodyIds = new B2BodyId[count];
         jointIds = new B2JointId[count + 1];
 
@@ -98,7 +102,14 @@ public class Bridge : Entity
 
         foreach (var bodyId in bodyIds)
         {
-            Utils.RenderB2Body(bodyId);
+            B2Vec2 bodyPos = B2Bodies.b2Body_GetPosition(bodyId);
+            B2Rot bodyRot = B2Bodies.b2Body_GetRotation(bodyId);
+            float bodyAngle = float.Atan2(bodyRot.s, bodyRot.c);
+            Game.Batch.PushMatrix(new(bodyPos.X, bodyPos.Y), Vector2.One, bodyAngle);
+
+            Game.Batch.ImageJustified(tileTexture, Vector2.Zero, new(.5f, .5f), 0.1f, Color.White);
+
+            Game.Batch.PopMatrix();
         }
     }
 }

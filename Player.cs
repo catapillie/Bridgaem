@@ -182,7 +182,8 @@ public class Player : Entity
         B2Vec2 bodyPos = B2Bodies.b2Body_GetPosition(Chassis);
         B2Rot bodyRot = B2Bodies.b2Body_GetRotation(Chassis);
         float bodyAngle = float.Atan2(bodyRot.s, bodyRot.c);
-        Game.Batch.PushMatrix(new(bodyPos.X, bodyPos.Y), new(1.0f, 1.0f), bodyAngle);
+        float xScale = Game.Instance.CurrentDirection is Game.Direction.Right ? +1f : -1f;
+        Game.Batch.PushMatrix(new(bodyPos.X, bodyPos.Y), new(xScale, 1.0f), bodyAngle);
         {
             Game.Batch.ImageJustified(chassisTexture, new(0f, -.4f), new(.5f, .6f), 0.2f, Color.White);
         }
