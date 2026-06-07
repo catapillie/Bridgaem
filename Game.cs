@@ -364,9 +364,10 @@ public class Game : App
 
         scoreLerp = Calc.Approach(scoreLerp, 0f, Dt);
 
-
+#if DEBUG
         if (Input.Keyboard.Down(Keys.Escape))
             Exit();
+#endif
 
         if (CurrentState is State.Editing)
         {
