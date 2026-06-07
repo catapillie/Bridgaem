@@ -3,6 +3,7 @@ using Bridgaem.BaseEntity;
 using Bridgaem.Utility;
 using Foster.Framework;
 using FosterImGui;
+using SoLoud;
 using System.Numerics;
 
 namespace Bridgaem;
@@ -71,6 +72,8 @@ public class Game : App
 
     public State CurrentState { get; set; } = State.Editing;
 
+    SoLoud.Soloud soloud = new();
+
 
     public Game() : base(new AppConfig()
     {
@@ -92,6 +95,9 @@ public class Game : App
 
         Font = new SpriteFont(GraphicsDevice,
             new Font("assets/font/archivo_black.ttf"), 200f);
+
+        soloud.init();
+        soloud.setGlobalVolume(0.5f);
     }
 
     private void GrantPlacement(PlacementKind kind, int count)
@@ -106,6 +112,13 @@ public class Game : App
     {
         if (inventory.ContainsKey(kind) && inventory[kind] > 0)
             inventory[kind]--;
+    }
+
+    public void PlaySound(string path)
+    {
+        Wav sfx = new Wav();
+        sfx.load("./assets/sound/levelup.wav");
+        soloud.play(sfx);
     }
 
     protected override void Startup()
@@ -180,6 +193,7 @@ public class Game : App
     protected override void Shutdown()
     {
         imRenderer.Dispose();
+        soloud.deinit();
     }
 
     public static void Instantiate(Entity entity)
