@@ -3,10 +3,7 @@ using Bridgaem.BaseEntity;
 using Bridgaem.Utility;
 using Foster.Framework;
 using FosterImGui;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
 using System.Numerics;
-using System.Security.Principal;
 
 namespace Bridgaem;
 
@@ -286,11 +283,13 @@ public class Game : App
                 iconPos += Vector2.UnitY * slotTex.Height * iconScale;
             }
 
+            //switch to playing
             iconPos = new Vector2(Window.Width, Window.Height) - slotTex.Size * iconScale;
             bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
             if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position))
             {
                 CurrentState = State.Playing;
+                Player.Respawn();
                 return;
             }
         }
@@ -377,12 +376,14 @@ public class Game : App
         else
         {
             {
+                //back
                 Subtexture slotTex = Atlas.Get("icon_slot");
                 Vector2 iconPos = new Vector2(Window.Width, Window.Height) - slotTex.Size * iconScale;
                 Rect bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
                 if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position))
                 {
                     CurrentState = State.Editing;
+                    Player.Respawn();
                 }
             }
         }
