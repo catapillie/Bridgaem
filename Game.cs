@@ -47,6 +47,7 @@ public class Game : App
     {
         None,
         Bridge,
+        Fan,
     }
     private PlacementKind placementKind = PlacementKind.None;
 
@@ -137,8 +138,6 @@ public class Game : App
         Instantiate(leftPlat = new BridgePlatform(new(0, 40)));
         Instantiate(rightPlat = new BridgePlatform(new(40, 40)));
 
-        Instantiate(new Bridge(new(5, 40 - 5), new(40 - 5, 40 - 5), 40));
-
         Vector2[] positions = [Vector2.Zero, Vector2.One * 15, Vector2.UnitX * 30];
         for (int i = 0; i < positions.Length; i++)
             positions[i] += Vector2.One * 35 + Vector2.UnitX * 30;
@@ -189,15 +188,31 @@ public class Game : App
         }
     }
 
+
+    private void FanPlacement()
+    {
+        if (Input.Mouse.LeftPressed)
+        {
+            Vector2 pos = ScreenToWorld(Input.Mouse.Position);
+            Instantiate(new Fan(pos, 20f, 1f, 200f));
+            System.Console.WriteLine("hello ");
+        }
+    }
+
     private void HandlePlacements()
     {
         if (Input.Keyboard.Pressed(Keys.B))
             placementKind = PlacementKind.Bridge;
+        if (Input.Keyboard.Pressed(Keys.F))
+            placementKind = PlacementKind.Fan;
 
         switch (placementKind)
         {
             case PlacementKind.Bridge:
                 BridgePlacement();
+                return;
+            case PlacementKind.Fan:
+                FanPlacement();
                 return;
 
             case PlacementKind.None:
