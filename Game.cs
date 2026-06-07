@@ -28,6 +28,7 @@ public class Game : App
     public static float BaseZoom = 20.0f; // pixels/meter
 
     private Player player;
+    private BridgePlatform leftPlat, rightPlat;
 
     public Game() : base(new AppConfig()
     {
@@ -55,6 +56,7 @@ public class Game : App
         {
             // bg
             const int layerCount = 6;
+            const float layerYdisp = 8f;
             Subtexture[] backmountains = [Atlas.Get("bg/mountain_back01"), Atlas.Get("bg/mountain_back02")];
             Subtexture[] mountains = [Atlas.Get("bg/mountain01"), Atlas.Get("bg/mountain02"), Atlas.Get("bg/mountain03")];
             Subtexture[] clouds = [Atlas.Get("bg/cloud01"), Atlas.Get("bg/cloud02"), Atlas.Get("bg/cloud03")];
@@ -66,7 +68,7 @@ public class Game : App
                 float factor = float.Pow(0.75f, layer);
                 var tex = clouds[Random.Shared.Next(clouds.Length)];
                 float scroll = (1 + layer) / 2f;
-                Instantiate(new Parallax(factor, scroll, tex, Color.White * 0.4f) { X = x - layer * 20, Y = layer * 5 - 20 });
+                Instantiate(new Parallax(factor, scroll, tex, Color.White * 0.4f) { X = x - layer * 20, Y = layer * layerYdisp - 20 });
             }
 
             for (float x = -1000; x <= 1000; x += 60f)
@@ -74,7 +76,7 @@ public class Game : App
                 int layer = layerCount;
                 float factor = float.Pow(0.75f, layer);
                 var tex = backmountains[Random.Shared.Next(backmountains.Length)];
-                Instantiate(new Parallax(factor, 0.0f, tex, Color.White) { X = x - layer * 20, Y = 30 - layer * 5 });
+                Instantiate(new Parallax(factor, 0.0f, tex, Color.White) { X = x - layer * 20, Y = 30 - layer * layerYdisp });
             }
 
             for (int layer = layerCount - 1; layer >= 0; layer -= 1)
@@ -85,7 +87,7 @@ public class Game : App
                 {
                     var tex = clouds[Random.Shared.Next(clouds.Length)];
                     float scroll = (1 + layer) / 2f;
-                    Instantiate(new Parallax(factor, scroll, tex, Color.White * 0.2f) { X = x - layer * 20, Y = 30 + layer * 5 });
+                    Instantiate(new Parallax(factor, scroll, tex, Color.White * 0.2f) { X = x - layer * 20, Y = 30 + layer * layerYdisp });
                 }
 
                 Color color = Color.White;
@@ -95,20 +97,25 @@ public class Game : App
                 for (float x = -1000; x <= 1000; x += 60f)
                 {
                     var tex = mountains[Random.Shared.Next(mountains.Length)];
-                    Instantiate(new Parallax(factor, 0.0f, tex, color) { X = x - layer * 20, Y = 30 - layer * 5 });
+                    Instantiate(new Parallax(factor, 0.0f, tex, color) { X = x - layer * 20, Y = 30 - layer * layerYdisp });
                 }
 
                 for (float x = -1000; x <= 1000; x += water.Width / 2f)
                 {
-                    Instantiate(new Parallax(factor, 0.0f, water, color) { X = x - layer * water.Width * 1.66f, Y = 60 - layer * 5 });
+                    Instantiate(new Parallax(factor, 0.0f, water, color) { X = x - layer * 50, Y = 76 - layer * layerYdisp });
                 }
             }
         }
 
-        Instantiate(new GameBox(new Vector2(0, 10), 256, 5, Calc.DegToRad * 0, B2BodyType.b2_kinematicBody));
-        Instantiate(new GameBox(new Vector2(10, 10), 30, 5, Calc.DegToRad * -40, B2BodyType.b2_kinematicBody));
+        // Instantiate(new GameBox(new Vector2(0, 10), 256, 5, Calc.DegToRad * 0, B2BodyType.b2_kinematicBody));
+        // Instantiate(new GameBox(new Vector2(10, 10), 30, 5, Calc.DegToRad * -40, B2BodyType.b2_kinematicBody));
 
         Instantiate(player = new Player(new Vector2()));
+        Instantiate(leftPlat = new BridgePlatform(new(0, 40)));
+        Instantiate(rightPlat = new BridgePlatform(new(40, 40)));
+
+        Camera += Vector2.UnitX * 20;
+        Camera += Vector2.UnitY * 30;
     }
 
     protected override void Shutdown()
@@ -135,8 +142,8 @@ public class Game : App
 
         if (player is not null)
         {
-            float targetX = player.ChassisPos.X;
-            const float movementOffset = 20;
+            float targetX = player.ChassisPos.X + 20;
+            const float movementOffset = 8;
             if (Input.Keyboard.Down(Keys.A)) targetX -= movementOffset;
             else if (Input.Keyboard.Down(Keys.D)) targetX += movementOffset;
             float dist = targetX - Camera.X;
@@ -172,8 +179,13 @@ public class Game : App
         Batch.PushMatrix(Window.Size / 2, Vector2.One * Zoom * BaseZoom, 0f);
         Batch.PushMatrix(-Camera, Vector2.One, 0f);
         {
+            Color color = Color.FromHexStringRGB("236dc0");
+            Batch.Rect(new(-1000, 50, 2000, 2000), color);
+
             foreach (Entity entity in entities)
                 entity.Render();
+
+
         }
         Batch.PopMatrix();
         Batch.PopMatrix();
