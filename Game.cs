@@ -1,5 +1,6 @@
 using Box2D.NET;
 using Bridgaem.BaseEntity;
+using Bridgaem.Utility;
 using Foster.Framework;
 using FosterImGui;
 using System.Numerics;
@@ -133,10 +134,11 @@ public class Game : App
                 }
             }
         }
-
-        Instantiate(Player = new Player(new Vector2()));
         Instantiate(leftPlat = new BridgePlatform(new(0, 40)));
         Instantiate(rightPlat = new BridgePlatform(new(40, 40)));
+
+        Vector2 playerPosition = B2Bodies.b2Body_GetPosition(leftPlat.BodyId).ToVector2() - new Vector2(0, leftPlat.Height / 2 + 5);
+        Instantiate(Player = new Player(playerPosition));
 
         Vector2[] positions = [Vector2.Zero, Vector2.One * 15, Vector2.UnitX * 30];
         for (int i = 0; i < positions.Length; i++)
@@ -272,19 +274,20 @@ public class Game : App
                     crossedTimer += Dt;
                     if (crossedTimer >= SafeTime)
                     {
+                        crossedTimer = 0f;
+                        hasCrossed = false;
+
                         switch (CurrentDirection)
                         {
                             case Direction.Right:
                                 CurrentDirection = Direction.Left;
-                                crossedTimer = 0f;
-                                hasCrossed = false;
                                 leftPlat.TargetPos -= Vector2.UnitX * 40;
+                                Player.RespawnPos = B2Bodies.b2Body_GetPosition(rightPlat.BodyId).ToVector2() - new Vector2(0, rightPlat.Height / 2 + 5);
                                 break;
                             case Direction.Left:
                                 CurrentDirection = Direction.Right;
-                                crossedTimer = 0f;
-                                hasCrossed = false;
                                 rightPlat.TargetPos += Vector2.UnitX * 40;
+                                Player.RespawnPos = B2Bodies.b2Body_GetPosition(leftPlat.BodyId).ToVector2() - new Vector2(0, leftPlat.Height / 2 + 5);
                                 break;
                             default: break;
                         }

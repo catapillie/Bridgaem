@@ -8,6 +8,7 @@ namespace Bridgaem;
 
 public class Player : Entity
 {
+    public Vector2 RespawnPos;
     private readonly Subtexture chassisTexture, wheelTexture;
 
     private float scale = 2.0f;
@@ -65,6 +66,7 @@ public class Player : Entity
         B2BodyDef bodyDef = B2Types.b2DefaultBodyDef();
         bodyDef.type = B2BodyType.b2_dynamicBody;
         bodyDef.position = new B2Vec2(0.0f + position.X, -1.0f * scale + position.Y);
+        RespawnPos = bodyDef.position.ToVector2();
         Chassis = B2Bodies.b2CreateBody(Game.WorldId, bodyDef);
         B2Shapes.b2CreatePolygonShape(Chassis, shapeDef, chassis);
 
@@ -165,9 +167,11 @@ public class Player : Entity
             B2Bodies.b2Body_ApplyAngularImpulse(Chassis, 200f, true);
         }
 
-
-
         B2Joints.b2Joint_WakeBodies(backwheelJointId);
+        B2Joints.b2Joint_WakeBodies(frontwheelJointId);
+
+        if (ChassisPos.Y >= 100)
+            Respawn();
 
         ImGui.Begin("Hello");
         bool changed = ImGui.SliderFloat("scale", ref scale, 0.1f, 10f);
@@ -221,6 +225,19 @@ public class Player : Entity
             Utils.RenderB2Body(BackWheel);
         }
 
+    }
+
+    public void Respawn()
+    {
+        B2Bodies.b2Body_SetTransform(Chassis, RespawnPos.ToB2V2(), B2MathFunction.b2MakeRot(0f));
+        B2Bodies.b2Body_SetTransform(FrontWheel, RespawnPos.ToB2V2(), B2MathFunction.b2MakeRot(0f));
+        B2Bodies.b2Body_SetTransform(BackWheel, RespawnPos.ToB2V2(), B2MathFunction.b2MakeRot(0f));
+        B2Bodies.b2Body_SetLinearVelocity(Chassis, new B2Vec2(0f, 0f));
+        B2Bodies.b2Body_SetAngularVelocity(Chassis, 0f);
+        B2Bodies.b2Body_SetLinearVelocity(BackWheel, new B2Vec2(0f, 0f));
+        B2Bodies.b2Body_SetAngularVelocity(BackWheel, 0f);
+        B2Bodies.b2Body_SetLinearVelocity(FrontWheel, new B2Vec2(0f, 0f));
+        B2Bodies.b2Body_SetAngularVelocity(FrontWheel, 0f);
     }
 
     public override void Destroy()

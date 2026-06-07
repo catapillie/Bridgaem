@@ -9,6 +9,7 @@ public class BridgePlatform : PhysicsEntity
     private readonly Subtexture texture;
     private readonly float scale;
     private readonly float width;
+    public readonly float Height;
     private readonly float triggerHeight;
 
     public Vector2 TargetPos { get; set; }
@@ -24,12 +25,13 @@ public class BridgePlatform : PhysicsEntity
         scale = 0.25f;
 
         width = texture.Width * scale;
-        triggerHeight = texture.Height * scale; // {F} azy on fait égale à la vraie height
-                                                // {L} a wise man once said ^
+        Height = texture.Height * scale;
+        triggerHeight = Height; // {F} azy on fait égale à la vraie height
+                                // {L} a wise man once said ^
 
         AddDefaultBox(
             width / 2f,
-            texture.Height * scale / 2f,
+            Height / 2f,
             friction: 0.8f);
     }
 
