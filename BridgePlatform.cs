@@ -8,6 +8,8 @@ public class BridgePlatform : PhysicsEntity
 {
     private readonly Subtexture texture;
     private readonly float scale;
+    private readonly float width;
+    private readonly float triggerHeight;
 
     public BridgePlatform(Vector2 pos)
     {
@@ -16,8 +18,12 @@ public class BridgePlatform : PhysicsEntity
 
         texture = Atlas.Get("bridge_platform");
         scale = 0.25f;
+
+        width = texture.Width * scale;
+        triggerHeight = texture.Height * scale; //azy on fait égale à la vraie height
+
         AddDefaultBox(
-            texture.Width * scale / 2f,
+            width / 2f,
             texture.Height * scale / 2f,
             friction: 0.8f);
     }
@@ -34,6 +40,14 @@ public class BridgePlatform : PhysicsEntity
         Game.Batch.ImageJustified(texture, Vector2.Zero, new(.5f, .5f), scale, Color.White);
 
         Game.Batch.PopMatrix();
+    }
 
+    public bool IsDetected(Player player)
+    {
+        B2Vec2 bodyPos = B2Bodies.b2Body_GetPosition(BodyId);
+
+        Rect rect = new Rect(bodyPos.X - width / 2, bodyPos.Y - triggerHeight, width, triggerHeight);
+
+        return rect.Contains(player.ChassisPos);
     }
 }
