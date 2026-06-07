@@ -19,7 +19,7 @@ public class Fan : PhysicsEntity
 
     private B2AABB windBox;
     private B2Vec2 windDir;
-    private float windSpeed = 15f;
+    private float windSpeed = 20f;
     private readonly float w, h, range;
     public Fan(Vector2 pos, float w, float h, float range)
     {
@@ -55,8 +55,8 @@ public class Fan : PhysicsEntity
         int i = 0;
         B2TreeStats result = B2Worlds.b2World_OverlapAABB(Game.WorldId, windBox, new B2QueryFilter(0xFFFFFFFF, 0xFFFFFFFF), (shapeid, context) =>
         {
-            B2Shapes.b2Shape_ApplyWind(shapeid, windDir, 1f, 1f, true);
-            return ++i > 64;
+            B2Shapes.b2Shape_ApplyWind(shapeid, windDir, 0f, 1f, true);
+            return true;
         }, null);
 
         ImGui.Begin("Hello");
