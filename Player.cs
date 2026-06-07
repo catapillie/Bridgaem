@@ -26,6 +26,8 @@ public class Player : Entity
     private B2JointId frontwheelJointId;
     private B2JointId backwheelJointId;
 
+    public bool Flipped;
+
     public Vector2 ChassisPos
     {
         get
@@ -170,11 +172,18 @@ public class Player : Entity
         B2ContactData[] contactData = new B2ContactData[1];
         int contactCount = B2Bodies.b2Body_GetContactData(Chassis, contactData, 1);
 
-        if (canInput && Game.Instance.Input.Keyboard.Pressed(Keys.Space) && Vector2.Dot(up, Vector2.UnitY) < 0.2f && contactCount > 0)
+        if (canInput && Vector2.Dot(up, Vector2.UnitY) < 0.2f && contactCount > 0)
         {
-            B2Bodies.b2Body_ApplyLinearImpulseToCenter(Chassis, new B2Vec2(0, -120), true);
-            B2Bodies.b2Body_ApplyAngularImpulse(Chassis, 200f, true);
+            Flipped = true;
+
+            if (Game.Instance.Input.Keyboard.Pressed(Keys.Space))
+            {
+                B2Bodies.b2Body_ApplyLinearImpulseToCenter(Chassis, new B2Vec2(0, -120), true);
+                B2Bodies.b2Body_ApplyAngularImpulse(Chassis, 200f, true);
+            }
         }
+        else
+            Flipped = false;
 
         B2Joints.b2Joint_WakeBodies(backwheelJointId);
         B2Joints.b2Joint_WakeBodies(frontwheelJointId);
