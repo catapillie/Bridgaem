@@ -62,6 +62,9 @@ public class Game : App
     public static SpriteFont Font { get; private set; } = null!;
     private const float iconScale = 3f;
 
+    private uint Score = 0;
+    private float scoreLerp = 0f;
+
     public enum State
     {
         Playing,
@@ -173,10 +176,7 @@ public class Game : App
         Camera += Vector2.UnitX * 20;
         Camera += Vector2.UnitY * 30;
 
-        GrantPlacement(PlacementKind.Bridge, 2);
-        GrantPlacement(PlacementKind.Fan, 1);
-        GrantPlacement(PlacementKind.UpdownPlank, 1);
-        GrantPlacement(PlacementKind.TurnPlank, 1);
+        GrantPlacement(PlacementKind.Bridge, 1);
     }
 
     protected override void Shutdown()
@@ -317,10 +317,19 @@ public class Game : App
 
     private void UpdateCamera()
     {
-        float targetZoom = 0.8f;
+        float targetZoom = 0.6f;
         if (CurrentState is State.Editing)
         {
-            targetZoom = 0.5f;
+            targetZoom = 0.4f;
+            const float panSpeed = 60;
+            if (Input.Keyboard.Down(Keys.Left))
+                Camera -= Vector2.UnitX * panSpeed * Dt;
+            if (Input.Keyboard.Down(Keys.Right))
+                Camera += Vector2.UnitX * panSpeed * Dt;
+            if (Input.Keyboard.Down(Keys.Up))
+                Camera -= Vector2.UnitY * panSpeed * Dt;
+            if (Input.Keyboard.Down(Keys.Down))
+                Camera += Vector2.UnitY * panSpeed * Dt;
         }
         Zoom += (targetZoom - Zoom) * float.Exp(-Dt * 100);
 
@@ -335,11 +344,13 @@ public class Game : App
                     _ => 0f
                 };
                 float targetX = Player.ChassisPos.X + dirOffset * 20;
-                const float movementOffset = 0;
-                if (Input.Keyboard.Down(Keys.A)) targetX -= movementOffset;
-                else if (Input.Keyboard.Down(Keys.D)) targetX += movementOffset;
-                float dist = targetX - Camera.X;
-                Camera += Vector2.UnitX * dist * float.Exp(-200 * Dt);
+                float distX = targetX - Camera.X;
+                Camera += Vector2.UnitX * distX * float.Exp(-200 * Dt);
+
+
+                float targetY = Player.ChassisPos.Y - 10;
+                float distY = targetY - Camera.Y;
+                Camera += Vector2.UnitY * distY * float.Exp(-200 * Dt);
             }
         }
     }
@@ -351,6 +362,8 @@ public class Game : App
         Dt = Time.Delta;
 
         UpdateCamera();
+
+        scoreLerp = Calc.Approach(scoreLerp, 0f, Dt);
 
 
         if (Input.Keyboard.Down(Keys.Escape))
@@ -393,8 +406,27 @@ public class Game : App
                     crossedTimer += Dt;
                     if (crossedTimer >= SafeTime)
                     {
+                        // level up
                         crossedTimer = 0f;
                         hasCrossed = false;
+                        CurrentState = State.Editing;
+                        Score++;
+                        scoreLerp = 1f;
+
+
+                        PlacementKind[] availableObjects = [
+                            PlacementKind.Bridge, PlacementKind.Bridge,
+                            PlacementKind.Fan, PlacementKind.Fan,
+                            PlacementKind.UpdownPlank, PlacementKind.UpdownPlank,
+                            PlacementKind.TurnPlank,
+                        ];
+
+                        // two new obj
+                        GrantPlacement(availableObjects[Random.Shared.Next(availableObjects.Length)], 1);
+                        GrantPlacement(availableObjects[Random.Shared.Next(availableObjects.Length)], 1);
+                        if (Score <= 10)
+                            GrantPlacement(availableObjects[Random.Shared.Next(availableObjects.Length)], 1);
+
 
                         switch (CurrentDirection)
                         {
@@ -637,6 +669,14 @@ public class Game : App
             Font.Draw(Batch, text, pos, new(.5f, .5f), 100 * scale * 1.2f, color * 0.25f);
             Font.Draw(Batch, text, pos, new(.5f, .5f), 100 * scale * 1.1f, color * 0.5f);
             Font.Draw(Batch, text, pos, new(.5f, .5f), 100 * scale, color);
+        }
+
+        //Score
+        {
+
+            Vector2 pos = new(Window.Width * 0.9f, Window.Height * .1f);
+            string text = Score.ToString();
+            Font.Draw(Batch, text, pos, new(.5f, .5f), 100 * (1 + Ease.Cube.In(scoreLerp)), Color.White);
         }
 
         Batch.Render(Window);
