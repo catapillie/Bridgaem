@@ -51,6 +51,7 @@ public class Game : App
         Fan,
         UpdownPlank,
         TurnPlank,
+        Slingshot,
     }
     private PlacementKind placementKind = PlacementKind.None;
 
@@ -261,6 +262,18 @@ public class Game : App
         }
     }
 
+
+
+    private void SlingshotPlacement()
+    {
+        if (Input.Mouse.LeftPressed)
+        {
+            Vector2 pos = ScreenToWorld(Input.Mouse.Position);
+            Instantiate(new LaunchPad(pos, 20f, 1.4f));
+            UsePlacement(PlacementKind.Slingshot);
+        }
+    }
+
     private void HandlePlacements()
     {
         {
@@ -307,6 +320,9 @@ public class Game : App
                 return;
             case PlacementKind.TurnPlank:
                 TurnPlankPlacement();
+                return;
+            case PlacementKind.Slingshot:
+                SlingshotPlacement();
                 return;
 
             case PlacementKind.None:
@@ -479,6 +495,7 @@ public class Game : App
          PlacementKind.Fan => "icons/fan",
          PlacementKind.UpdownPlank => "icons/updownplank",
          PlacementKind.TurnPlank => "icons/turnplank",
+         PlacementKind.Slingshot => "icons/sling",
          PlacementKind.None => "icons/none",
          _ => "icons/none",
      };
@@ -490,6 +507,7 @@ public class Game : App
          PlacementKind.Fan => "Fan",
          PlacementKind.UpdownPlank => "Plank (up-down)",
          PlacementKind.TurnPlank => "Plank (turn)",
+         PlacementKind.Slingshot => "Launchpad",
          PlacementKind.None => "None",
          _ => "None",
      };
@@ -500,7 +518,7 @@ public class Game : App
             return;
 
         float offset = (float)Time.Elapsed.TotalSeconds * 5f % 1f;
-        Batch.LineDashed(bridgePlacementLeft, bridgePlacementRight, 0.1f, Color.White, 1f, offset);
+        Batch.LineDashed(bridgePlacementLeft, bridgePlacementRight, 0.2f, Color.White, 1f, offset);
     }
 
     private void RenderBridgePlacementGizmo()
@@ -554,6 +572,22 @@ public class Game : App
         Batch.Image(iconTexture, Input.Mouse.Position, Vector2.Zero, Vector2.One * 2, 0f, Color.White);
     }
 
+    private void RenderSlingshotPlacement()
+    {
+        Batch.ImageJustified(
+            Atlas.Get("sling"), ScreenToWorld(Input.Mouse.Position),
+            Vector2.One * 0.5f, 0.15f, Color.White * 0.7f);
+
+        float offset = (float)Time.Elapsed.TotalSeconds * 5f % 1f;
+        Batch.LineDashed(ScreenToWorld(Input.Mouse.Position), ScreenToWorld(Input.Mouse.Position) - Vector2.UnitY * 8, 0.2f, Color.White, 1f, offset);
+    }
+
+    private void RenderSlingshotPlacementGizmo()
+    {
+        Subtexture iconTexture = Atlas.Get(GetPlacementIconName(PlacementKind.Slingshot));
+        Batch.Image(iconTexture, Input.Mouse.Position, Vector2.Zero, Vector2.One * 2, 0f, Color.White);
+    }
+
     protected override void Render()
     {
         Window.Clear(Color.DeepSkyBlue);
@@ -581,6 +615,8 @@ public class Game : App
                         RenderUpdownPlankPlacement(); break;
                     case PlacementKind.TurnPlank:
                         RenderTurnPlankPlacement(); break;
+                    case PlacementKind.Slingshot:
+                        RenderSlingshotPlacement(); break;
 
                     case PlacementKind.None:
                     default: break;
@@ -654,6 +690,8 @@ public class Game : App
                         RenderUpdownPlankPlacementGizmo(); break;
                     case PlacementKind.TurnPlank:
                         RenderTurnPlankPlacementGizmo(); break;
+                    case PlacementKind.Slingshot:
+                        RenderSlingshotPlacementGizmo(); break;
 
                     case PlacementKind.None:
                     default: break;

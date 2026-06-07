@@ -19,8 +19,12 @@ namespace Bridgaem
         bool forward = true;
         private float currentTime = 0f;
 
+        private readonly float w, h;
+
         public LaunchPad(Vector2 pos, float w, float h)
         {
+            this.w = w;
+            this.h = h;
             originalPos = pos;
             B2Bodies.b2Body_SetTransform(BodyId, new B2Vec2(pos.X, pos.Y), B2MathFunction.b2MakeRot(0f));
             B2Bodies.b2Body_SetType(BodyId, B2BodyType.b2_kinematicBody);
@@ -89,6 +93,19 @@ namespace Bridgaem
                 }
             }
 
+        }
+
+        public override void Render()
+        {
+            if (Game.Instance.Input.Keyboard.Down(Keys.Tab))
+                base.Render();
+
+            B2Vec2 bodyPos = B2Bodies.b2Body_GetPosition(BodyId);
+            B2Rot bodyRot = B2Bodies.b2Body_GetRotation(BodyId);
+            float bodyAngle = float.Atan2(bodyRot.s, bodyRot.c);
+            Game.Batch.PushMatrix(new(bodyPos.X, bodyPos.Y), Vector2.One, bodyAngle);
+            Game.Batch.ImageFit(Atlas.Get("sling"), new(-w / 2, -h / 2, w, h), Vector2.Zero, Color.White, false, false);
+            Game.Batch.PopMatrix();
         }
     }
 }
