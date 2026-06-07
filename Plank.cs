@@ -13,9 +13,12 @@ namespace Bridgaem
 
         private int currentPosIndex = 0;
         private float currentTime = 0f;
+        private readonly float w, h;
 
         public Plank(Vector2[] pos, float w, float h, float rotation, float angularVelocity = 0, float timeBetweenMovements = 1)
         {
+            this.w = w;
+            this.h = h;
             positions = pos;
             this.angularVelocity = angularVelocity;
             movementTime = timeBetweenMovements;
@@ -45,6 +48,19 @@ namespace Bridgaem
             Vector2 target = Ease.Quad.InOut(currentTime / movementTime) * (positions[(currentPosIndex + 1) % positions.Length] - positions[currentPosIndex]) + positions[currentPosIndex];
             currentTime += Game.Dt;
             B2Bodies.b2Body_SetLinearVelocity(BodyId, ((target - position) / Game.Dt).ToB2V2());
+        }
+
+        public override void Render()
+        {
+            if (Game.Instance.Input.Keyboard.Down(Keys.Tab))
+                base.Render();
+
+            B2Vec2 bodyPos = B2Bodies.b2Body_GetPosition(BodyId);
+            B2Rot bodyRot = B2Bodies.b2Body_GetRotation(BodyId);
+            float bodyAngle = float.Atan2(bodyRot.s, bodyRot.c);
+            Game.Batch.PushMatrix(new(bodyPos.X, bodyPos.Y), Vector2.One, bodyAngle);
+            Game.Batch.ImageFit(Atlas.Get("plank"), new(-w / 2, -h / 2, w, h), Vector2.Zero, Color.White, false, false);
+            Game.Batch.PopMatrix();
         }
     }
 }

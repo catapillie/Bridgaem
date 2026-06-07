@@ -49,6 +49,7 @@ public class Game : App
         None,
         Bridge,
         Fan,
+        UpdownPlank,
     }
     private PlacementKind placementKind = PlacementKind.None;
 
@@ -167,6 +168,7 @@ public class Game : App
 
         GrantPlacement(PlacementKind.Bridge, 2);
         GrantPlacement(PlacementKind.Fan, 1);
+        GrantPlacement(PlacementKind.UpdownPlank, 1);
     }
 
     protected override void Shutdown()
@@ -221,6 +223,19 @@ public class Game : App
         }
     }
 
+    private void UpdownPlankPlacement()
+    {
+        if (Input.Mouse.LeftPressed)
+        {
+            Vector2 pos = ScreenToWorld(Input.Mouse.Position);
+            Instantiate(new Plank([
+                pos,
+                pos - Vector2.UnitY * 20f
+            ], 20f, 1.4f, 0f, 0f, 5));
+            UsePlacement(PlacementKind.UpdownPlank);
+        }
+    }
+
     private void HandlePlacements()
     {
         {
@@ -250,6 +265,9 @@ public class Game : App
                 return;
             case PlacementKind.Fan:
                 FanPlacement();
+                return;
+            case PlacementKind.UpdownPlank:
+                UpdownPlankPlacement();
                 return;
 
             case PlacementKind.None:
@@ -359,6 +377,7 @@ public class Game : App
      {
          PlacementKind.Bridge => "icons/bridge",
          PlacementKind.Fan => "icons/fan",
+         PlacementKind.UpdownPlank => "icons/updownplank",
          PlacementKind.None => "icons/none",
          _ => "icons/none",
      };
@@ -368,6 +387,7 @@ public class Game : App
      {
          PlacementKind.Bridge => "Bridge",
          PlacementKind.Fan => "Fan",
+         PlacementKind.UpdownPlank => "Plank (up-down)",
          PlacementKind.None => "None",
          _ => "None",
      };
@@ -384,7 +404,7 @@ public class Game : App
     private void RenderBridgePlacementGizmo()
     {
         Subtexture iconTexture = Atlas.Get(GetPlacementIconName(PlacementKind.Bridge));
-        Batch.Image(iconTexture, Input.Mouse.Position, Vector2.Zero, Vector2.One, 0f, Color.White);
+        Batch.Image(iconTexture, Input.Mouse.Position, Vector2.Zero, Vector2.One * 2, 0f, Color.White);
     }
 
     private void RenderFanPlacement()
@@ -395,7 +415,26 @@ public class Game : App
 
     private void RenderFanPlacementGizmo()
     {
-        // rien à faire ici
+
+    }
+
+    private void RenderUpdownPlankPlacement()
+    {
+        Batch.ImageJustified(
+            Atlas.Get("plank"), ScreenToWorld(Input.Mouse.Position),
+            Vector2.One * 0.5f, 0.15f, Color.White * 0.7f);
+        Batch.ImageJustified(
+            Atlas.Get("plank"), ScreenToWorld(Input.Mouse.Position) - Vector2.UnitY * 20,
+            Vector2.One * 0.5f, 0.15f, Color.White * 0.7f);
+        Batch.LineDashed(
+            ScreenToWorld(Input.Mouse.Position),
+            ScreenToWorld(Input.Mouse.Position) - Vector2.UnitY * 20, 0.2f, Color.White * 0.7f, 1f, 0f);
+    }
+
+    private void RenderUpdownPlankPlacementGizmo()
+    {
+        Subtexture iconTexture = Atlas.Get(GetPlacementIconName(PlacementKind.UpdownPlank));
+        Batch.Image(iconTexture, Input.Mouse.Position, Vector2.Zero, Vector2.One * 2, 0f, Color.White);
     }
 
     protected override void Render()
@@ -420,6 +459,8 @@ public class Game : App
                         RenderBridgePlacement(); break;
                     case PlacementKind.Fan:
                         RenderFanPlacement(); break;
+                    case PlacementKind.UpdownPlank:
+                        RenderUpdownPlankPlacement(); break;
 
                     case PlacementKind.None:
                     default: break;
@@ -461,6 +502,8 @@ public class Game : App
                         RenderBridgePlacementGizmo(); break;
                     case PlacementKind.Fan:
                         RenderFanPlacementGizmo(); break;
+                    case PlacementKind.UpdownPlank:
+                        RenderUpdownPlankPlacementGizmo(); break;
 
                     case PlacementKind.None:
                     default: break;
