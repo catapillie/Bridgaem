@@ -433,10 +433,11 @@ public class Game : App
 
 
                         PlacementKind[] availableObjects = [
-                            PlacementKind.Bridge, PlacementKind.Bridge,
-                            PlacementKind.Fan, PlacementKind.Fan,
-                            PlacementKind.UpdownPlank, PlacementKind.UpdownPlank,
+                            PlacementKind.Bridge, PlacementKind.Bridge, PlacementKind.Bridge,
+                            PlacementKind.Fan, PlacementKind.Fan, PlacementKind.Fan,
+                            PlacementKind.UpdownPlank, PlacementKind.UpdownPlank, PlacementKind.UpdownPlank,
                             PlacementKind.TurnPlank,
+                            PlacementKind.Slingshot,
                         ];
 
                         // two new obj
