@@ -489,6 +489,14 @@ public class Game : App
         return pos;
     }
 
+    private Vector2 WorldToScreen(Vector2 pos)
+    {
+        pos -= Camera;
+        pos *= Zoom * BaseZoom;
+        pos += Window.Size / 2;
+        return pos;
+    }
+
     private string GetPlacementIconName(PlacementKind k)
      => k switch
      {
@@ -644,6 +652,19 @@ public class Game : App
             }
         }
 
+        if (CurrentState is State.Editing)
+        {
+            // back icon
+            {
+                iconPos = new Vector2(Window.Width, Window.Height - slotTex.Size.Y * 3) - slotTex.Size * iconScale;
+                Rect bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
+                Color color = Color.White;
+                Subtexture iconTexture = Atlas.Get("icons/camera");
+                //Batch.Image(slotTex, iconPos, Vector2.Zero, Vector2.One * iconScale, 0f, color);
+                Batch.Image(iconTexture, iconPos, Vector2.Zero, Vector2.One * iconScale, 0f, color);
+            }
+        }
+
         // ui placement
         if (CurrentState is State.Editing)
         {
@@ -718,6 +739,15 @@ public class Game : App
             Vector2 pos = new(Window.Width * 0.9f, Window.Height * .1f);
             string text = Score.ToString();
             Font.Draw(Batch, text, pos, new(.5f, .5f), 100 * (1 + Ease.Cube.In(scoreLerp)), Color.White);
+        }
+
+        // Car Flipped Text
+        {
+            if (Player.Flipped)
+            {
+                Vector2 pos = WorldToScreen(Player.ChassisPos) - new Vector2(0, 50);
+                Game.Font.Draw(Game.Batch, "Space to Unflip !", pos, new(.5f, .5f), 10, Color.White);
+            }
         }
 
         Batch.Render(Window);
