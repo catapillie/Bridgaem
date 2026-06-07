@@ -59,7 +59,7 @@ public class Player : Entity
         shapeDef.density = density / scale;
         shapeDef.material.friction = 0.2f;
 
-        B2Circle circle = new B2Circle(new B2Vec2(0f, 0f), 0.4f * scale);
+        B2Circle circle = new(new B2Vec2(0f, 0f), 0.4f * scale);
 
         B2BodyDef bodyDef = B2Types.b2DefaultBodyDef();
         bodyDef.type = B2BodyType.b2_dynamicBody;
