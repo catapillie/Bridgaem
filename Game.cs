@@ -114,7 +114,12 @@ public class Game : App
         Instantiate(leftPlat = new BridgePlatform(new(0, 40)));
         Instantiate(rightPlat = new BridgePlatform(new(40, 40)));
 
-        Instantiate(new Bridge(new(5, 40 - 5), new(40 - 5, 40 - 5), 100));
+        Instantiate(new Bridge(new(5, 40 - 5), new(40 - 5, 40 - 5), 40));
+
+        Vector2[] positions = [Vector2.Zero, Vector2.One * 15, Vector2.UnitX * 30];
+        for (int i = 0; i < positions.Length; i++)
+            positions[i] += Vector2.One * 35 + Vector2.UnitX * 30;
+        Instantiate(new Plank(positions, 30, 5, 0f, 0f, 3f));
 
         Camera += Vector2.UnitX * 20;
         Camera += Vector2.UnitY * 30;
