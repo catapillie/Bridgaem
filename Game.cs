@@ -4,6 +4,7 @@ using Bridgaem.Utility;
 using Foster.Framework;
 using FosterImGui;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Numerics;
 using System.Security.Principal;
 
@@ -200,7 +201,16 @@ public class Game : App
     {
         if (isPlacingBridge)
         {
+            const float maxLength = 30f;
             bridgePlacementRight = ScreenToWorld(Input.Mouse.Position);
+            Vector2 diff = bridgePlacementRight - bridgePlacementLeft;
+            float d = float.Clamp(diff.Length(), 0.0f, maxLength);
+            if (d > 0.1f)
+            {
+                Vector2 dir = diff.Normalized();
+                bridgePlacementRight = bridgePlacementLeft + dir * d;
+            }
+
 
             if (!Input.Mouse.LeftDown)
             {
