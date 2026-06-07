@@ -58,6 +58,7 @@ public class Game : App
             Subtexture[] backmountains = [Atlas.Get("bg/mountain_back01"), Atlas.Get("bg/mountain_back02")];
             Subtexture[] mountains = [Atlas.Get("bg/mountain01"), Atlas.Get("bg/mountain02"), Atlas.Get("bg/mountain03")];
             Subtexture[] clouds = [Atlas.Get("bg/cloud01"), Atlas.Get("bg/cloud02"), Atlas.Get("bg/cloud03")];
+            Subtexture water = Atlas.Get("bg/water");
 
             for (float x = -1000; x <= 1000; x += 120)
             {
@@ -97,6 +98,10 @@ public class Game : App
                     Instantiate(new Parallax(factor, 0.0f, tex, color) { X = x - layer * 20, Y = 30 - layer * 5 });
                 }
 
+                for (float x = -1000; x <= 1000; x += water.Width / 2f)
+                {
+                    Instantiate(new Parallax(factor, 0.0f, water, color) { X = x - layer * water.Width * 1.66f, Y = 60 - layer * 5 });
+                }
             }
         }
 
