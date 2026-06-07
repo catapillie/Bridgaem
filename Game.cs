@@ -51,7 +51,10 @@ public class Game : App
     }
     private PlacementKind placementKind = PlacementKind.None;
 
+    private readonly Dictionary<PlacementKind, int> inventory = [];
+
     public static SpriteFont Font { get; private set; } = null!;
+    private const float iconScale = 3f;
 
 
     public Game() : base(new AppConfig()
@@ -74,6 +77,20 @@ public class Game : App
 
         Font = new SpriteFont(GraphicsDevice,
             new Font("assets/font/archivo_black.ttf"), 200f);
+    }
+
+    private void GrantPlacement(PlacementKind kind, int count)
+    {
+        if (inventory.ContainsKey(kind))
+            inventory[kind] += count;
+        else
+            inventory.Add(kind, count);
+    }
+
+    private void UsePlacement(PlacementKind kind)
+    {
+        if (inventory.ContainsKey(kind) && inventory[kind] > 0)
+            inventory[kind]--;
     }
 
     protected override void Startup()
@@ -145,6 +162,9 @@ public class Game : App
 
         Camera += Vector2.UnitX * 20;
         Camera += Vector2.UnitY * 30;
+
+        GrantPlacement(PlacementKind.Bridge, 2);
+        GrantPlacement(PlacementKind.Fan, 1);
     }
 
     protected override void Shutdown()
@@ -177,17 +197,17 @@ public class Game : App
                 int tileCount = 1 + (int)len * 2;
                 Instantiate(new Bridge(bridgePlacementLeft, bridgePlacementRight, tileCount));
                 isPlacingBridge = false;
+                UsePlacement(PlacementKind.Bridge);
                 return;
             }
 
         }
-        else if (Input.Mouse.LeftDown)
+        else if (Input.Mouse.LeftPressed)
         {
             bridgePlacementLeft = ScreenToWorld(Input.Mouse.Position);
             isPlacingBridge = true;
         }
     }
-
 
     private void FanPlacement()
     {
@@ -195,16 +215,31 @@ public class Game : App
         {
             Vector2 pos = ScreenToWorld(Input.Mouse.Position);
             Instantiate(new Fan(pos, 20f, 1f, 200f));
-            System.Console.WriteLine("hello ");
+            UsePlacement(PlacementKind.Fan);
         }
     }
 
     private void HandlePlacements()
     {
-        if (Input.Keyboard.Pressed(Keys.B))
-            placementKind = PlacementKind.Bridge;
-        if (Input.Keyboard.Pressed(Keys.F))
-            placementKind = PlacementKind.Fan;
+        {
+            if (inventory.TryGetValue(placementKind, out int count) && count <= 0)
+                placementKind = PlacementKind.None;
+        }
+
+        {
+            Subtexture slotTex = Atlas.Get("icon_slot");
+            Vector2 iconPos = Vector2.Zero;
+            foreach (var (k, count) in inventory)
+            {
+                Rect bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
+                if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position) && count > 0)
+                {
+                    placementKind = k;
+                    return;
+                }
+                iconPos += Vector2.UnitY * slotTex.Height * iconScale;
+            }
+        }
 
         switch (placementKind)
         {
@@ -216,7 +251,7 @@ public class Game : App
                 return;
 
             case PlacementKind.None:
-            default: return;
+            default: break;
         }
     }
 
@@ -235,7 +270,7 @@ public class Game : App
                 _ => 0f
             };
             float targetX = Player.ChassisPos.X + dirOffset * 20;
-            const float movementOffset = 8;
+            const float movementOffset = 0;
             if (Input.Keyboard.Down(Keys.A)) targetX -= movementOffset;
             else if (Input.Keyboard.Down(Keys.D)) targetX += movementOffset;
             float dist = targetX - Camera.X;
@@ -316,6 +351,24 @@ public class Game : App
         return pos;
     }
 
+    private string GetPlacementIconName(PlacementKind k)
+     => k switch
+     {
+         PlacementKind.Bridge => "icons/bridge",
+         PlacementKind.Fan => "icons/fan",
+         PlacementKind.None => "icons/none",
+         _ => "icons/none",
+     };
+
+    private string GetPlacementName(PlacementKind k)
+     => k switch
+     {
+         PlacementKind.Bridge => "Bridge",
+         PlacementKind.Fan => "Fan",
+         PlacementKind.None => "None",
+         _ => "None",
+     };
+
     private void RenderBridgePlacement()
     {
         if (!isPlacingBridge)
@@ -323,6 +376,23 @@ public class Game : App
 
         float offset = (float)Time.Elapsed.TotalSeconds * 5f % 1f;
         Batch.LineDashed(bridgePlacementLeft, bridgePlacementRight, 0.1f, Color.White, 1f, offset);
+    }
+
+    private void RenderBridgePlacementGizmo()
+    {
+        Subtexture iconTexture = Atlas.Get(GetPlacementIconName(PlacementKind.Bridge));
+        Batch.Image(iconTexture, Input.Mouse.Position, Vector2.Zero, Vector2.One, 0f, Color.White);
+    }
+
+    private void RenderFanPlacement()
+    {
+        Subtexture iconTexture = Atlas.Get("fan/up1");
+        Batch.ImageJustified(iconTexture, ScreenToWorld(Input.Mouse.Position), new(.5f, .5f), 0.3f, Color.White * 0.5f);
+    }
+
+    private void RenderFanPlacementGizmo()
+    {
+        // rien à faire ici
     }
 
     protected override void Render()
@@ -339,12 +409,14 @@ public class Game : App
             foreach (Entity entity in entities)
                 entity.Render();
 
-            // gizmos for placements
+            // world gizmos for placements
             {
                 switch (placementKind)
                 {
                     case PlacementKind.Bridge:
                         RenderBridgePlacement(); break;
+                    case PlacementKind.Fan:
+                        RenderFanPlacement(); break;
 
                     case PlacementKind.None:
                     default: break;
@@ -353,6 +425,45 @@ public class Game : App
         }
         Batch.PopMatrix();
         Batch.PopMatrix();
+
+        // ui placement
+        {
+            Subtexture slotTex = Atlas.Get("icon_slot");
+            Vector2 iconPos = Vector2.Zero;
+            foreach (var (k, count) in inventory)
+            {
+                Rect bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
+                Color color = count > 0 ? (Color.White * 0.8f) : (Color.Red * 0.5f);
+                if (bounds.Contains(Input.Mouse.Position) && count > 0 || placementKind == k)
+                {
+                    color = Color.White;
+                }
+
+                Subtexture iconTexture = Atlas.Get(GetPlacementIconName(k));
+                Batch.Image(slotTex, iconPos, Vector2.Zero, Vector2.One * iconScale, 0f, color);
+                Batch.Image(iconTexture, iconPos, Vector2.Zero, Vector2.One * iconScale, 0f, color);
+                Font.Draw(Batch, count.ToString(), iconPos + Vector2.UnitX * slotTex.Width * iconScale, 30f, color);
+                if (placementKind == k)
+                    Font.Draw(Batch, GetPlacementName(placementKind),
+                        iconPos + new Vector2(slotTex.Width * iconScale, slotTex.Height * iconScale * 0.5f),
+                        30f, color);
+
+                iconPos += Vector2.UnitY * slotTex.Height * iconScale;
+            }
+
+            {
+                switch (placementKind)
+                {
+                    case PlacementKind.Bridge:
+                        RenderBridgePlacementGizmo(); break;
+                    case PlacementKind.Fan:
+                        RenderFanPlacementGizmo(); break;
+
+                    case PlacementKind.None:
+                    default: break;
+                }
+            }
+        }
 
         if (hasCrossed)
         {
