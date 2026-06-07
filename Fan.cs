@@ -19,7 +19,7 @@ public class Fan : PhysicsEntity
 
     private B2AABB windBox;
     private B2Vec2 windDir;
-    private float windSpeed = 20f;
+    private float windSpeed = 10f;
     private readonly float w, h, range;
     public Fan(Vector2 pos, float w, float h, float range)
     {

@@ -20,9 +20,9 @@ public class Player : Entity
     private float density = 0.475f;
     private float gravityScale = 4.16f;
 
-    private B2BodyId Chassis;
-    private B2BodyId FrontWheel;
-    private B2BodyId BackWheel;
+    public B2BodyId Chassis;
+    public B2BodyId FrontWheel;
+    public B2BodyId BackWheel;
     private B2JointId frontwheelJointId;
     private B2JointId backwheelJointId;
 
@@ -77,6 +77,7 @@ public class Player : Entity
 
         bodyDef.position = new B2Vec2(-1.0f * scale + position.X, -0.35f * scale + position.Y);
         bodyDef.allowFastRotation = true;
+        bodyDef.isBullet = false;
         BackWheel = B2Bodies.b2CreateBody(Game.WorldId, bodyDef);
         B2Shapes.b2CreateCircleShape(BackWheel, shapeDef, circle);
 
@@ -168,7 +169,7 @@ public class Player : Entity
         Vector2 up = new Vector2(-r.s, r.c);
         B2ContactData[] contactData = new B2ContactData[1];
         int contactCount = B2Bodies.b2Body_GetContactData(Chassis, contactData, 1);
-        if (Game.Instance.Input.Keyboard.Pressed(Keys.Space) && Vector2.Dot(up, Vector2.UnitY) < 0 && contactCount > 0)
+        if (Game.Instance.Input.Keyboard.Pressed(Keys.Space) && Vector2.Dot(up, Vector2.UnitY) < 0.2f && contactCount > 0)
         {
             B2Bodies.b2Body_ApplyLinearImpulseToCenter(Chassis, new B2Vec2(0, -120), true);
             B2Bodies.b2Body_ApplyAngularImpulse(Chassis, 200f, true);
