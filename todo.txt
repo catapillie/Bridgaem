@@ -1,5 +1,4 @@
 todo
   finish gameplay loop
   add limit to bridge length
-  planks vertical and rotating
   

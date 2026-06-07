@@ -138,14 +138,15 @@ public class Player : Entity
     {
         base.Update();
 
-        if (Game.Instance.Input.Keyboard.Down(Keys.A))
+        bool canInput = Game.Instance.CurrentState is Game.State.Playing;
+        if (Game.Instance.Input.Keyboard.Down(Keys.A) && canInput)
         {
             B2WheelJoints.b2WheelJoint_EnableMotor(frontwheelJointId, true);
             B2WheelJoints.b2WheelJoint_SetMotorSpeed(frontwheelJointId, -speed);
             B2WheelJoints.b2WheelJoint_EnableMotor(backwheelJointId, false);
             B2WheelJoints.b2WheelJoint_SetMaxMotorTorque(frontwheelJointId, torque);
         }
-        else if (Game.Instance.Input.Keyboard.Down(Keys.D))
+        else if (Game.Instance.Input.Keyboard.Down(Keys.D) && canInput)
         {
             B2WheelJoints.b2WheelJoint_EnableMotor(backwheelJointId, true);
             B2WheelJoints.b2WheelJoint_SetMotorSpeed(backwheelJointId, speed);

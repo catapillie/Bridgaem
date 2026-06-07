@@ -3,7 +3,9 @@ using Bridgaem.BaseEntity;
 using Bridgaem.Utility;
 using Foster.Framework;
 using FosterImGui;
+using System.ComponentModel;
 using System.Numerics;
+using System.Security.Principal;
 
 namespace Bridgaem;
 
@@ -58,6 +60,14 @@ public class Game : App
 
     public static SpriteFont Font { get; private set; } = null!;
     private const float iconScale = 3f;
+
+    public enum State
+    {
+        Playing,
+        Editing,
+    }
+
+    public State CurrentState { get; set; } = State.Editing;
 
 
     public Game() : base(new AppConfig()
@@ -159,11 +169,6 @@ public class Game : App
         Vector2 playerPosition = B2Bodies.b2Body_GetPosition(leftPlat.BodyId).ToVector2() - new Vector2(0, leftPlat.Height / 2 + 5);
         Instantiate(Player = new Player(playerPosition));
 
-        Vector2[] positions = [Vector2.Zero, Vector2.One * 15, Vector2.UnitX * 30];
-        for (int i = 0; i < positions.Length; i++)
-            positions[i] += Vector2.One * 35 + Vector2.UnitX * 30;
-        Instantiate(new Plank(positions, 30, 5, 0f, 0f, 3f));
-
         Camera += Vector2.UnitX * 20;
         Camera += Vector2.UnitY * 30;
 
@@ -259,15 +264,24 @@ public class Game : App
         {
             Subtexture slotTex = Atlas.Get("icon_slot");
             Vector2 iconPos = Vector2.Zero;
+            Rect bounds;
             foreach (var (k, count) in inventory)
             {
-                Rect bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
+                bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
                 if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position) && count > 0)
                 {
                     placementKind = k;
                     return;
                 }
                 iconPos += Vector2.UnitY * slotTex.Height * iconScale;
+            }
+
+            iconPos = new Vector2(Window.Width, Window.Height) - slotTex.Size * iconScale;
+            bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
+            if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position))
+            {
+                CurrentState = State.Playing;
+                return;
             }
         }
 
@@ -291,38 +305,64 @@ public class Game : App
         }
     }
 
+    private void UpdateCamera()
+    {
+        float targetZoom = 0.8f;
+        if (CurrentState is State.Editing)
+        {
+            targetZoom = 0.5f;
+        }
+        Zoom += (targetZoom - Zoom) * float.Exp(-Dt * 100);
+
+        if (CurrentState is State.Playing)
+        {
+            if (Player is not null)
+            {
+                float dirOffset = hasCrossed ? 0 : CurrentDirection switch
+                {
+                    Direction.Right => +1,
+                    Direction.Left => -1,
+                    _ => 0f
+                };
+                float targetX = Player.ChassisPos.X + dirOffset * 20;
+                const float movementOffset = 0;
+                if (Input.Keyboard.Down(Keys.A)) targetX -= movementOffset;
+                else if (Input.Keyboard.Down(Keys.D)) targetX += movementOffset;
+                float dist = targetX - Camera.X;
+                Camera += Vector2.UnitX * dist * float.Exp(-200 * Dt);
+            }
+        }
+    }
+
     protected override void Update()
     {
         imRenderer.BeginLayout();
 
         Dt = Time.Delta;
 
-        if (Player is not null)
-        {
-            float dirOffset = hasCrossed ? 0 : CurrentDirection switch
-            {
-                Direction.Right => +1,
-                Direction.Left => -1,
-                _ => 0f
-            };
-            float targetX = Player.ChassisPos.X + dirOffset * 20;
-            const float movementOffset = 0;
-            if (Input.Keyboard.Down(Keys.A)) targetX -= movementOffset;
-            else if (Input.Keyboard.Down(Keys.D)) targetX += movementOffset;
-            float dist = targetX - Camera.X;
-            Camera += Vector2.UnitX * dist * float.Exp(-200 * Dt);
-        }
+        UpdateCamera();
 
-        if (Input.Keyboard.Down(Keys.O))
-            Zoom *= float.Pow(0.5f, Dt);
-        if (Input.Keyboard.Down(Keys.P))
-            Zoom *= float.Pow(2f, Dt);
 
         if (Input.Keyboard.Down(Keys.Escape))
             Exit();
 
-        // placement  
-        HandlePlacements();
+        if (CurrentState is State.Editing)
+        {
+            // placement  
+            HandlePlacements();
+        }
+        else
+        {
+            {
+                Subtexture slotTex = Atlas.Get("icon_slot");
+                Vector2 iconPos = new Vector2(Window.Width, Window.Height) - slotTex.Size * iconScale;
+                Rect bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
+                if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position))
+                {
+                    CurrentState = State.Editing;
+                }
+            }
+        }
 
         foreach (Entity entity in entities)
             entity.Update();
@@ -485,6 +525,7 @@ public class Game : App
                 entity.Render();
 
             // world gizmos for placements
+            if (CurrentState is State.Editing)
             {
                 switch (placementKind)
                 {
@@ -505,10 +546,27 @@ public class Game : App
         Batch.PopMatrix();
         Batch.PopMatrix();
 
-        // ui placement
+        Subtexture slotTex = Atlas.Get("icon_slot");
+        Vector2 iconPos;
+        if (CurrentState is State.Playing)
         {
-            Subtexture slotTex = Atlas.Get("icon_slot");
-            Vector2 iconPos = Vector2.Zero;
+            // back icon
+            {
+                iconPos = new Vector2(Window.Width, Window.Height) - slotTex.Size * iconScale;
+                Rect bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
+                Color color = Color.White * 0.8f;
+                if (bounds.Contains(Input.Mouse.Position))
+                    color = Color.White;
+                Subtexture iconTexture = Atlas.Get("icons/back");
+                Batch.Image(slotTex, iconPos, Vector2.Zero, Vector2.One * iconScale, 0f, color);
+                Batch.Image(iconTexture, iconPos, Vector2.Zero, Vector2.One * iconScale, 0f, color);
+            }
+        }
+
+        // ui placement
+        if (CurrentState is State.Editing)
+        {
+            iconPos = Vector2.Zero;
             foreach (var (k, count) in inventory)
             {
                 Rect bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
@@ -526,8 +584,19 @@ public class Game : App
                     Font.Draw(Batch, GetPlacementName(placementKind),
                         iconPos + new Vector2(slotTex.Width * iconScale, slotTex.Height * iconScale * 0.5f),
                         30f, color);
-
                 iconPos += Vector2.UnitY * slotTex.Height * iconScale;
+            }
+
+            // go icon
+            {
+                iconPos = new Vector2(Window.Width, Window.Height) - slotTex.Size * iconScale;
+                Rect bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
+                Color color = Color.White * 0.8f;
+                if (bounds.Contains(Input.Mouse.Position))
+                    color = Color.White;
+                Subtexture iconTexture = Atlas.Get("icons/go");
+                Batch.Image(slotTex, iconPos, Vector2.Zero, Vector2.One * iconScale, 0f, color);
+                Batch.Image(iconTexture, iconPos, Vector2.Zero, Vector2.One * iconScale, 0f, color);
             }
 
             {
