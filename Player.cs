@@ -11,7 +11,7 @@ public class Player : Entity
     private readonly Subtexture chassisTexture, wheelTexture;
 
     private float scale = 2.0f;
-    private float speed = 340f;
+    private float speed = 90f;
     private float torque = 180f;
     private float hertz = 1.6f;
     private float dampingRatio = 1.5f;

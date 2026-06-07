@@ -27,7 +27,7 @@ public class Game : App
     public static float Zoom { get; set; } = 1.0f;
     public static float BaseZoom = 20.0f; // pixels/meter
 
-    private Player player;
+    public Player Player { get; private set; }
     private BridgePlatform leftPlat, rightPlat;
 
     public enum Direction
@@ -133,12 +133,16 @@ public class Game : App
             }
         }
 
-        // Instantiate(new GameBox(new Vector2(0, 10), 256, 5, Calc.DegToRad * 0, B2BodyType.b2_kinematicBody));
-        // Instantiate(new GameBox(new Vector2(10, 10), 30, 5, Calc.DegToRad * -40, B2BodyType.b2_kinematicBody));
-
-        Instantiate(player = new Player(new Vector2()));
+        Instantiate(Player = new Player(new Vector2()));
         Instantiate(leftPlat = new BridgePlatform(new(0, 40)));
         Instantiate(rightPlat = new BridgePlatform(new(40, 40)));
+
+        Instantiate(new Bridge(new(5, 40 - 5), new(40 - 5, 40 - 5), 40));
+
+        Vector2[] positions = [Vector2.Zero, Vector2.One * 15, Vector2.UnitX * 30];
+        for (int i = 0; i < positions.Length; i++)
+            positions[i] += Vector2.One * 35 + Vector2.UnitX * 30;
+        Instantiate(new Plank(positions, 30, 5, 0f, 0f, 3f));
 
         Camera += Vector2.UnitX * 20;
         Camera += Vector2.UnitY * 30;
@@ -207,7 +211,7 @@ public class Game : App
 
         Dt = Time.Delta;
 
-        if (player is not null)
+        if (Player is not null)
         {
             float dirOffset = hasCrossed ? 0 : CurrentDirection switch
             {
@@ -215,7 +219,7 @@ public class Game : App
                 Direction.Left => -1,
                 _ => 0f
             };
-            float targetX = player.ChassisPos.X + dirOffset * 20;
+            float targetX = Player.ChassisPos.X + dirOffset * 20;
             const float movementOffset = 8;
             if (Input.Keyboard.Down(Keys.A)) targetX -= movementOffset;
             else if (Input.Keyboard.Down(Keys.D)) targetX += movementOffset;
@@ -239,12 +243,12 @@ public class Game : App
 
         // gameplay loop
         {
-            if (player is not null)
+            if (Player is not null)
             {
                 hasCrossed = CurrentDirection switch
                 {
-                    Direction.Right => rightPlat.IsDetected(player),
-                    Direction.Left => leftPlat.IsDetected(player),
+                    Direction.Right => rightPlat.IsDetected(Player),
+                    Direction.Left => leftPlat.IsDetected(Player),
                     _ => false,
                 };
 
