@@ -169,7 +169,8 @@ public class Player : Entity
         Vector2 up = new Vector2(-r.s, r.c);
         B2ContactData[] contactData = new B2ContactData[1];
         int contactCount = B2Bodies.b2Body_GetContactData(Chassis, contactData, 1);
-        if (Game.Instance.Input.Keyboard.Pressed(Keys.Space) && Vector2.Dot(up, Vector2.UnitY) < 0.2f && contactCount > 0)
+
+        if (canInput && Game.Instance.Input.Keyboard.Pressed(Keys.Space) && Vector2.Dot(up, Vector2.UnitY) < 0.2f && contactCount > 0)
         {
             B2Bodies.b2Body_ApplyLinearImpulseToCenter(Chassis, new B2Vec2(0, -120), true);
             B2Bodies.b2Body_ApplyAngularImpulse(Chassis, 200f, true);
@@ -178,9 +179,10 @@ public class Player : Entity
         B2Joints.b2Joint_WakeBodies(backwheelJointId);
         B2Joints.b2Joint_WakeBodies(frontwheelJointId);
 
-        if (Game.Instance.Input.Keyboard.Pressed(Keys.R) || ChassisPos.Y >= 100)
+        if (canInput && Game.Instance.Input.Keyboard.Pressed(Keys.R) || ChassisPos.Y >= 100)
             Respawn();
 
+#if DEBUG
         ImGui.Begin("Hello");
         bool changed = ImGui.SliderFloat("scale", ref scale, 0.1f, 10f);
         changed |= ImGui.SliderFloat("speed", ref speed, 10f, 500f);
@@ -193,6 +195,7 @@ public class Player : Entity
         if (changed)
             ApplyPhysicsParameters();
         ImGui.End();
+#endif
     }
 
     private void RenderChassis()
