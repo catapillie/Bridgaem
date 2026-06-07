@@ -443,7 +443,7 @@ public class Game : App
                         hasCrossed = false;
                         CurrentState = State.Editing;
                         Score++;
-                        PlaySound("")
+                        PlaySound("levelup.wav");
                         scoreLerp = 1f;
 
 
