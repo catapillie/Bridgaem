@@ -117,7 +117,7 @@ public class Game : App
     public void PlaySound(string path)
     {
         Wav sfx = new Wav();
-        sfx.load("./assets/sound/levelup.wav");
+        sfx.load("./assets/sound/" + path);
         soloud.play(sfx);
     }
 
@@ -443,6 +443,7 @@ public class Game : App
                         hasCrossed = false;
                         CurrentState = State.Editing;
                         Score++;
+                        PlaySound("")
                         scoreLerp = 1f;
 
 
