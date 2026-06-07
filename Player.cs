@@ -135,22 +135,26 @@ public class Player : Entity
     {
         base.Update();
 
-        B2WheelJoints.b2WheelJoint_EnableMotor(frontwheelJointId, false);
-        B2WheelJoints.b2WheelJoint_EnableMotor(backwheelJointId, false);
         if (Game.Instance.Input.Keyboard.Down(Keys.A))
         {
             B2WheelJoints.b2WheelJoint_EnableMotor(frontwheelJointId, true);
             B2WheelJoints.b2WheelJoint_SetMotorSpeed(frontwheelJointId, -speed);
             B2WheelJoints.b2WheelJoint_EnableMotor(backwheelJointId, false);
+            B2WheelJoints.b2WheelJoint_SetMaxMotorTorque(frontwheelJointId, torque);
         }
         else if (Game.Instance.Input.Keyboard.Down(Keys.D))
         {
             B2WheelJoints.b2WheelJoint_EnableMotor(backwheelJointId, true);
             B2WheelJoints.b2WheelJoint_SetMotorSpeed(backwheelJointId, speed);
             B2WheelJoints.b2WheelJoint_EnableMotor(frontwheelJointId, false);
+            B2WheelJoints.b2WheelJoint_SetMaxMotorTorque(backwheelJointId, torque);
         }
         else
         {
+            B2WheelJoints.b2WheelJoint_EnableMotor(frontwheelJointId, true);
+            B2WheelJoints.b2WheelJoint_EnableMotor(backwheelJointId, true);
+            B2WheelJoints.b2WheelJoint_SetMaxMotorTorque(backwheelJointId, torque / 5);
+            B2WheelJoints.b2WheelJoint_SetMaxMotorTorque(frontwheelJointId, torque / 5);
             B2WheelJoints.b2WheelJoint_SetMotorSpeed(backwheelJointId, 0.0f);
             B2WheelJoints.b2WheelJoint_SetMotorSpeed(frontwheelJointId, 0.0f);
         }
