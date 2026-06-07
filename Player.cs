@@ -159,6 +159,12 @@ public class Player : Entity
             B2WheelJoints.b2WheelJoint_SetMotorSpeed(frontwheelJointId, 0.0f);
         }
 
+        if (Game.Instance.Input.Keyboard.Pressed(Keys.Space))
+        {
+            B2Bodies.b2Body_ApplyLinearImpulseToCenter(Chassis, new B2Vec2(0, -120), true);
+            B2Bodies.b2Body_ApplyAngularImpulse(Chassis, 200f, true);
+        }
+
 
 
         B2Joints.b2Joint_WakeBodies(backwheelJointId);
