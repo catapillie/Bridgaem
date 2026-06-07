@@ -180,6 +180,8 @@ public class Player : Entity
             {
                 B2Bodies.b2Body_ApplyLinearImpulseToCenter(Chassis, new B2Vec2(0, -120), true);
                 B2Bodies.b2Body_ApplyAngularImpulse(Chassis, 200f, true);
+
+                Game.Instance.PlaySound("flip.wav");
             }
         }
         else
@@ -189,7 +191,11 @@ public class Player : Entity
         B2Joints.b2Joint_WakeBodies(frontwheelJointId);
 
         if (canInput && Game.Instance.Input.Keyboard.Pressed(Keys.R) || ChassisPos.Y >= 100)
+        {
+            if (ChassisPos.Y >= 100)
+                Game.Instance.PlaySound("crash.wav");
             Respawn();
+        }
 
 #if DEBUG
         ImGui.Begin("Hello");
