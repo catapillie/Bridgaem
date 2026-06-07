@@ -56,7 +56,7 @@ public class Fan : PhysicsEntity
         B2TreeStats result = B2Worlds.b2World_OverlapAABB(Game.WorldId, windBox, new B2QueryFilter(0xFFFFFFFF, 0xFFFFFFFF), (shapeid, context) =>
         {
             B2Shapes.b2Shape_ApplyWind(shapeid, windDir, 0f, 1f, true);
-            return ++i > 64;
+            return true;
         }, null);
 
         ImGui.Begin("Hello");

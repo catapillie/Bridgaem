@@ -66,6 +66,7 @@ public class Player : Entity
         B2BodyDef bodyDef = B2Types.b2DefaultBodyDef();
         bodyDef.type = B2BodyType.b2_dynamicBody;
         bodyDef.position = new B2Vec2(0.0f + position.X, -1.0f * scale + position.Y);
+        bodyDef.isBullet = true;
         RespawnPos = bodyDef.position.ToVector2();
         Chassis = B2Bodies.b2CreateBody(Game.WorldId, bodyDef);
         B2Shapes.b2CreatePolygonShape(Chassis, shapeDef, chassis);
@@ -161,7 +162,12 @@ public class Player : Entity
             B2WheelJoints.b2WheelJoint_SetMotorSpeed(frontwheelJointId, 0.0f);
         }
 
-        if (Game.Instance.Input.Keyboard.Pressed(Keys.Space))
+        B2Rot r = B2Bodies.b2Body_GetRotation(Chassis);
+
+        Vector2 up = new Vector2(-r.s, r.c);
+        B2ContactData[] contactData = new B2ContactData[1];
+        int contactCount = B2Bodies.b2Body_GetContactData(Chassis, contactData, 1);
+        if (Game.Instance.Input.Keyboard.Pressed(Keys.Space) && Vector2.Dot(up, Vector2.UnitY) < 0 && contactCount > 0)
         {
             B2Bodies.b2Body_ApplyLinearImpulseToCenter(Chassis, new B2Vec2(0, -120), true);
             B2Bodies.b2Body_ApplyAngularImpulse(Chassis, 200f, true);
@@ -170,7 +176,7 @@ public class Player : Entity
         B2Joints.b2Joint_WakeBodies(backwheelJointId);
         B2Joints.b2Joint_WakeBodies(frontwheelJointId);
 
-        if (ChassisPos.Y >= 100)
+        if (Game.Instance.Input.Keyboard.Pressed(Keys.R) || ChassisPos.Y >= 100)
             Respawn();
 
         ImGui.Begin("Hello");
@@ -224,7 +230,6 @@ public class Player : Entity
             Utils.RenderB2Body(FrontWheel);
             Utils.RenderB2Body(BackWheel);
         }
-
     }
 
     public void Respawn()
