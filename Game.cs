@@ -50,6 +50,7 @@ public class Game : App
         Bridge,
         Fan,
         UpdownPlank,
+        TurnPlank,
     }
     private PlacementKind placementKind = PlacementKind.None;
 
@@ -169,6 +170,7 @@ public class Game : App
         GrantPlacement(PlacementKind.Bridge, 2);
         GrantPlacement(PlacementKind.Fan, 1);
         GrantPlacement(PlacementKind.UpdownPlank, 1);
+        GrantPlacement(PlacementKind.TurnPlank, 1);
     }
 
     protected override void Shutdown()
@@ -236,6 +238,17 @@ public class Game : App
         }
     }
 
+
+    private void TurnPlankPlacement()
+    {
+        if (Input.Mouse.LeftPressed)
+        {
+            Vector2 pos = ScreenToWorld(Input.Mouse.Position);
+            Instantiate(new Plank([pos], 20f, 1.4f, 0f, 2.5f, 5));
+            UsePlacement(PlacementKind.TurnPlank);
+        }
+    }
+
     private void HandlePlacements()
     {
         {
@@ -268,6 +281,9 @@ public class Game : App
                 return;
             case PlacementKind.UpdownPlank:
                 UpdownPlankPlacement();
+                return;
+            case PlacementKind.TurnPlank:
+                TurnPlankPlacement();
                 return;
 
             case PlacementKind.None:
@@ -378,6 +394,7 @@ public class Game : App
          PlacementKind.Bridge => "icons/bridge",
          PlacementKind.Fan => "icons/fan",
          PlacementKind.UpdownPlank => "icons/updownplank",
+         PlacementKind.TurnPlank => "icons/turnplank",
          PlacementKind.None => "icons/none",
          _ => "icons/none",
      };
@@ -388,6 +405,7 @@ public class Game : App
          PlacementKind.Bridge => "Bridge",
          PlacementKind.Fan => "Fan",
          PlacementKind.UpdownPlank => "Plank (up-down)",
+         PlacementKind.TurnPlank => "Plank (turn)",
          PlacementKind.None => "None",
          _ => "None",
      };
@@ -437,6 +455,21 @@ public class Game : App
         Batch.Image(iconTexture, Input.Mouse.Position, Vector2.Zero, Vector2.One * 2, 0f, Color.White);
     }
 
+    private void RenderTurnPlankPlacement()
+    {
+        Batch.ImageJustified(
+            Atlas.Get("plank"), ScreenToWorld(Input.Mouse.Position),
+            Vector2.One * 0.5f, 0.15f, Color.White * 0.7f);
+        float offset = (float)Time.Elapsed.TotalSeconds * 5f % 1f;
+        Batch.CircleDashed(new Circle(ScreenToWorld(Input.Mouse.Position), 10f), 0.2f, 32, Color.White * 0.7f, 1f, offset);
+    }
+
+    private void RenderTurnPlankPlacementGizmo()
+    {
+        Subtexture iconTexture = Atlas.Get(GetPlacementIconName(PlacementKind.TurnPlank));
+        Batch.Image(iconTexture, Input.Mouse.Position, Vector2.Zero, Vector2.One * 2, 0f, Color.White);
+    }
+
     protected override void Render()
     {
         Window.Clear(Color.DeepSkyBlue);
@@ -461,6 +494,8 @@ public class Game : App
                         RenderFanPlacement(); break;
                     case PlacementKind.UpdownPlank:
                         RenderUpdownPlankPlacement(); break;
+                    case PlacementKind.TurnPlank:
+                        RenderTurnPlankPlacement(); break;
 
                     case PlacementKind.None:
                     default: break;
@@ -504,6 +539,8 @@ public class Game : App
                         RenderFanPlacementGizmo(); break;
                     case PlacementKind.UpdownPlank:
                         RenderUpdownPlankPlacementGizmo(); break;
+                    case PlacementKind.TurnPlank:
+                        RenderTurnPlankPlacementGizmo(); break;
 
                     case PlacementKind.None:
                     default: break;
