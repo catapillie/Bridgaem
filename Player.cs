@@ -8,8 +8,8 @@ namespace Bridgaem;
 
 public class Player : Entity
 {
+    private readonly Subtexture chassisTexture, wheelTexture;
 
-    private readonly Subtexture texture;
     private float scale = 2.0f;
     private float speed = 340f;
     private float torque = 180f;
@@ -36,7 +36,8 @@ public class Player : Entity
 
     public Player(Vector2 position)
     {
-        texture = Atlas.Get("car");
+        chassisTexture = Atlas.Get("car/chassis");
+        wheelTexture = Atlas.Get("car/wheel");
 
         const float halfHeight = 0.5f;
         B2Vec2[] vertices = [
@@ -172,21 +173,37 @@ public class Player : Entity
         ImGui.End();
     }
 
-    public override void Render()
+    private void RenderChassis()
     {
-        base.Render();
-
-
         B2Vec2 bodyPos = B2Bodies.b2Body_GetPosition(Chassis);
         B2Rot bodyRot = B2Bodies.b2Body_GetRotation(Chassis);
         float bodyAngle = float.Atan2(bodyRot.s, bodyRot.c);
         Game.Batch.PushMatrix(new(bodyPos.X, bodyPos.Y), new(1.0f, 1.0f), bodyAngle);
         {
-            Game.Batch.ImageJustified(texture, Vector2.Zero, new(.5f, .6f), 0.2f, Color.White);
+            Game.Batch.ImageJustified(chassisTexture, new(0f, -.4f), new(.5f, .6f), 0.2f, Color.White);
         }
         Game.Batch.PopMatrix();
+    }
 
-        if (Game.Instance.Input.Keyboard.Down(Keys.LeftAlt))
+    private void RenderWheel(B2BodyId bodyId)
+    {
+        B2Vec2 bodyPos = B2Bodies.b2Body_GetPosition(bodyId);
+        B2Rot bodyRot = B2Bodies.b2Body_GetRotation(bodyId);
+        float bodyAngle = float.Atan2(bodyRot.s, bodyRot.c);
+        Game.Batch.PushMatrix(new(bodyPos.X, bodyPos.Y), new(1.0f, 1.0f), bodyAngle);
+        Game.Batch.ImageJustified(wheelTexture, new(+.1f, 0f), new(.5f, .5f), 0.2f, Color.White);
+        Game.Batch.PopMatrix();
+    }
+
+    public override void Render()
+    {
+        base.Render();
+
+        RenderWheel(FrontWheel);
+        RenderWheel(BackWheel);
+        RenderChassis();
+
+        if (Game.Instance.Input.Keyboard.Down(Keys.Tab))
         {
             Utils.RenderB2Body(Chassis);
             Utils.RenderB2Body(FrontWheel);

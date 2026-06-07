@@ -114,7 +114,7 @@ public class Game : App
         Instantiate(leftPlat = new BridgePlatform(new(0, 40)));
         Instantiate(rightPlat = new BridgePlatform(new(40, 40)));
 
-        Instantiate(new Bridge(new(5, 40 - 5), new(40 - 5, 40 - 5), 25));
+        Instantiate(new Bridge(new(5, 40 - 5), new(40 - 5, 40 - 5), 100));
 
         Camera += Vector2.UnitX * 20;
         Camera += Vector2.UnitY * 30;
