@@ -9,14 +9,31 @@ public class Fan : PhysicsEntity
 {
     private readonly Subtexture[] frames;
 
+    private struct WindLine
+    {
+        public Vector2 Initial;
+        public float Factor;
+    }
+
+    private readonly WindLine[] windLines;
+
     private B2AABB windBox;
     private B2Vec2 windDir;
     private float windSpeed = 15f;
-    private readonly float w, h;
+    private readonly float w, h, range;
     public Fan(Vector2 pos, float w, float h, float range)
     {
         this.w = w;
         this.h = h;
+        this.range = range;
+
+        windLines = new WindLine[(int)(w * h) * 20];
+        for (int i = 1; i < windLines.Length; i++)
+        {
+            windLines[i].Initial.X = Random.Shared.NextSingle() * w;
+            windLines[i].Initial.Y = Random.Shared.NextSingle() * range;
+            windLines[i].Factor = .5f + Random.Shared.NextSingle() * .5f;
+        }
 
         frames = [Atlas.Get("fan/up1"), Atlas.Get("fan/up2"), Atlas.Get("fan/up3")];
 
@@ -60,6 +77,14 @@ public class Fan : PhysicsEntity
         {
             int frame = (int)((float)Game.Instance.Time.Elapsed.TotalSeconds * 10f % 1.0f * 3);
             Game.Batch.ImageStretch(frames[frame], new(-w / 2, -h * 2 / 2, w, h * 2), Color.White);
+
+            float t = (float)Game.Instance.Time.Elapsed.TotalSeconds;
+            foreach (WindLine wl in windLines)
+            {
+                float y = (wl.Initial.Y + t * 200 * wl.Factor) % range;
+                Vector2 p = new(wl.Initial.X - w / 2, -y);
+                Game.Batch.Line(p, p - Vector2.UnitY * 10f * wl.Factor, 0.2f, Color.White * 0.4f * wl.Factor);
+            }
         }
         Game.Batch.PopMatrix();
 
