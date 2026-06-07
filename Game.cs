@@ -27,7 +27,7 @@ public class Game : App
     public static float Zoom { get; set; } = 1.0f;
     public static float BaseZoom = 20.0f; // pixels/meter
 
-    private Player player;
+    public Player Player { get; private set; }
     private BridgePlatform leftPlat, rightPlat;
 
     public Game() : base(new AppConfig()
@@ -110,7 +110,7 @@ public class Game : App
         // Instantiate(new GameBox(new Vector2(0, 10), 256, 5, Calc.DegToRad * 0, B2BodyType.b2_kinematicBody));
         // Instantiate(new GameBox(new Vector2(10, 10), 30, 5, Calc.DegToRad * -40, B2BodyType.b2_kinematicBody));
 
-        Instantiate(player = new Player(new Vector2()));
+        Instantiate(Player = new Player(new Vector2()));
         Instantiate(leftPlat = new BridgePlatform(new(0, 40)));
         Instantiate(rightPlat = new BridgePlatform(new(40, 40)));
 
@@ -120,6 +120,8 @@ public class Game : App
         for (int i = 0; i < positions.Length; i++)
             positions[i] += Vector2.One * 35 + Vector2.UnitX * 30;
         Instantiate(new Plank(positions, 30, 5, 0f, 0f, 3f));
+
+        Instantiate(new Fan(new Vector2(5, 30), 20, 3, 50));
 
         Camera += Vector2.UnitX * 20;
         Camera += Vector2.UnitY * 30;
@@ -147,9 +149,9 @@ public class Game : App
 
         Dt = Time.Delta;
 
-        if (player is not null)
+        if (Player is not null)
         {
-            float targetX = player.ChassisPos.X + 20;
+            float targetX = Player.ChassisPos.X + 20;
             const float movementOffset = 8;
             if (Input.Keyboard.Down(Keys.A)) targetX -= movementOffset;
             else if (Input.Keyboard.Down(Keys.D)) targetX += movementOffset;
