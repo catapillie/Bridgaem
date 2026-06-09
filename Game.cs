@@ -359,13 +359,13 @@ public class Game : App
         {
             targetZoom = 0.4f;
             const float panSpeed = 60;
-            if (Input.Keyboard.Down(Keys.Left))
+            if (Input.Keyboard.Down(Keys.A))
                 Camera -= Vector2.UnitX * panSpeed * Dt;
-            if (Input.Keyboard.Down(Keys.Right))
+            if (Input.Keyboard.Down(Keys.D))
                 Camera += Vector2.UnitX * panSpeed * Dt;
-            if (Input.Keyboard.Down(Keys.Up))
+            if (Input.Keyboard.Down(Keys.W))
                 Camera -= Vector2.UnitY * panSpeed * Dt;
-            if (Input.Keyboard.Down(Keys.Down))
+            if (Input.Keyboard.Down(Keys.S))
                 Camera += Vector2.UnitY * panSpeed * Dt;
         }
         Zoom += (targetZoom - Zoom) * float.Exp(-Dt * 100);

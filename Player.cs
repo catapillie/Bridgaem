@@ -190,10 +190,9 @@ public class Player : Entity
         B2Joints.b2Joint_WakeBodies(backwheelJointId);
         B2Joints.b2Joint_WakeBodies(frontwheelJointId);
 
-        if (canInput && Game.Instance.Input.Keyboard.Pressed(Keys.R) || ChassisPos.Y >= 100)
+        if (ChassisPos.Y >= 100)
         {
-            if (ChassisPos.Y >= 100)
-                Game.Instance.PlaySound("crash.wav");
+            Game.Instance.PlaySound("crash.wav");
             Respawn();
         }
 
