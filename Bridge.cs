@@ -1,5 +1,4 @@
 ﻿using Box2D.NET;
-using Bridgaem.Utility;
 using Foster.Framework;
 using System.Numerics;
 
@@ -86,14 +85,17 @@ public class Bridge : Entity
         }
     }
 
-    public override void Update()
-    {
-        base.Update();
-    }
 
     public override void Destroy()
     {
         base.Destroy();
+        Game.Instance.GrantPlacement(Game.PlacementKind.Bridge, 1);
+
+        for (int i = 0; i < bodyIds.Length; ++i)
+            B2Joints.b2DestroyJoint(jointIds[i], false);
+
+        for (int i = 0; i < bodyIds.Length; ++i)
+            B2Bodies.b2DestroyBody(bodyIds[i]);
     }
 
     public override void Render()

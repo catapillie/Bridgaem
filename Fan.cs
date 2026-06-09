@@ -82,4 +82,10 @@ public class Fan : PhysicsEntity
         Game.Batch.PopMatrix();
 
     }
+
+    public override void Destroy()
+    {
+        base.Destroy();
+        Game.Instance.GrantPlacement(Game.PlacementKind.Fan, 1);
+    }
 }

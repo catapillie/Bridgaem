@@ -15,10 +15,13 @@ namespace Bridgaem
         private float currentTime = 0f;
         private readonly float w, h;
 
-        public Plank(Vector2[] pos, float w, float h, float rotation, float angularVelocity = 0, float timeBetweenMovements = 1)
+        private readonly Game.PlacementKind placementKind;
+
+        public Plank(Vector2[] pos, float w, float h, float rotation, Game.PlacementKind placementKind, float angularVelocity = 0, float timeBetweenMovements = 1)
         {
             this.w = w;
             this.h = h;
+            this.placementKind = placementKind;
             positions = pos;
             this.angularVelocity = angularVelocity;
             movementTime = timeBetweenMovements;
@@ -61,6 +64,12 @@ namespace Bridgaem
             Game.Batch.PushMatrix(new(bodyPos.X, bodyPos.Y), Vector2.One, bodyAngle);
             Game.Batch.ImageFit(Atlas.Get("plank"), new(-w / 2, -h / 2, w, h), Vector2.Zero, Color.White, false, false);
             Game.Batch.PopMatrix();
+        }
+
+        public override void Destroy()
+        {
+            base.Destroy();
+            Game.Instance.GrantPlacement(placementKind, 1);
         }
     }
 }

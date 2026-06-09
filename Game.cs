@@ -32,6 +32,8 @@ public class Game : App
     public Player Player { get; private set; }
     private BridgePlatform leftPlat, rightPlat;
 
+    private List<Entity> toDelete = new();
+
     public enum Direction
     {
         Right,
@@ -45,14 +47,14 @@ public class Game : App
     private bool hasCrossed = false;
 
 
-    enum PlacementKind
+    public enum PlacementKind
     {
         None,
         Bridge,
         Fan,
         UpdownPlank,
         TurnPlank,
-        Slingshot,
+        LaunchPad,
     }
     private PlacementKind placementKind = PlacementKind.None;
 
@@ -100,7 +102,7 @@ public class Game : App
         soloud.setGlobalVolume(0.5f);
     }
 
-    private void GrantPlacement(PlacementKind kind, int count)
+    public void GrantPlacement(PlacementKind kind, int count)
     {
         if (inventory.ContainsKey(kind))
             inventory[kind] += count;
@@ -108,10 +110,13 @@ public class Game : App
             inventory.Add(kind, count);
     }
 
-    private void UsePlacement(PlacementKind kind)
+    private void UsePlacement(PlacementKind kind, Entity createdEntity)
     {
         if (inventory.ContainsKey(kind) && inventory[kind] > 0)
+        {
             inventory[kind]--;
+            toDelete.Add(createdEntity);
+        }
     }
 
     public void PlaySound(string path)
@@ -228,9 +233,10 @@ public class Game : App
             {
                 float len = Vector2.Distance(bridgePlacementLeft, bridgePlacementRight);
                 int tileCount = 1 + (int)len * 2;
-                Instantiate(new Bridge(bridgePlacementLeft, bridgePlacementRight, tileCount));
+                Bridge bridge;
+                Instantiate(bridge = new Bridge(bridgePlacementLeft, bridgePlacementRight, tileCount));
                 isPlacingBridge = false;
-                UsePlacement(PlacementKind.Bridge);
+                UsePlacement(PlacementKind.Bridge, bridge);
                 return;
             }
 
@@ -247,8 +253,9 @@ public class Game : App
         if (Input.Mouse.LeftPressed)
         {
             Vector2 pos = ScreenToWorld(Input.Mouse.Position);
-            Instantiate(new Fan(pos, 20f, 1f, 200f));
-            UsePlacement(PlacementKind.Fan);
+            Fan fan;
+            Instantiate(fan = new Fan(pos, 20f, 1f, 50f));
+            UsePlacement(PlacementKind.Fan, fan);
         }
     }
 
@@ -257,11 +264,9 @@ public class Game : App
         if (Input.Mouse.LeftPressed)
         {
             Vector2 pos = ScreenToWorld(Input.Mouse.Position);
-            Instantiate(new Plank([
-                pos,
-                pos - Vector2.UnitY * 20f
-            ], 20f, 1.4f, 0f, 0f, 5));
-            UsePlacement(PlacementKind.UpdownPlank);
+            Plank plank;
+            Instantiate(plank = new Plank([pos, pos - Vector2.UnitY * 20f], 20f, 1.4f, 0f, PlacementKind.UpdownPlank, 0f, 5));
+            UsePlacement(PlacementKind.UpdownPlank, plank);
         }
     }
 
@@ -271,8 +276,9 @@ public class Game : App
         if (Input.Mouse.LeftPressed)
         {
             Vector2 pos = ScreenToWorld(Input.Mouse.Position);
-            Instantiate(new Plank([pos], 20f, 1.4f, 0f, 2.5f, 5));
-            UsePlacement(PlacementKind.TurnPlank);
+            Plank plank;
+            Instantiate(plank = new Plank([pos], 20f, 1.4f, 0f, PlacementKind.TurnPlank, 2.5f, 5));
+            UsePlacement(PlacementKind.TurnPlank, plank);
         }
     }
 
@@ -283,8 +289,9 @@ public class Game : App
         if (Input.Mouse.LeftPressed)
         {
             Vector2 pos = ScreenToWorld(Input.Mouse.Position);
-            Instantiate(new LaunchPad(pos, 20f, 1.4f));
-            UsePlacement(PlacementKind.Slingshot);
+            LaunchPad launchPad;
+            Instantiate(launchPad = new LaunchPad(pos, 20f, 1.4f));
+            UsePlacement(PlacementKind.LaunchPad, launchPad);
         }
     }
 
@@ -336,7 +343,7 @@ public class Game : App
             case PlacementKind.TurnPlank:
                 TurnPlankPlacement();
                 return;
-            case PlacementKind.Slingshot:
+            case PlacementKind.LaunchPad:
                 SlingshotPlacement();
                 return;
 
@@ -447,6 +454,7 @@ public class Game : App
                         Score++;
                         PlaySound("levelup.wav");
                         scoreLerp = 1f;
+                        toDelete.Clear();
 
 
                         PlacementKind[] availableObjects = [
@@ -454,7 +462,7 @@ public class Game : App
                             PlacementKind.Fan, PlacementKind.Fan, PlacementKind.Fan,
                             PlacementKind.UpdownPlank, PlacementKind.UpdownPlank, PlacementKind.UpdownPlank,
                             PlacementKind.TurnPlank,
-                            PlacementKind.Slingshot,
+                            PlacementKind.LaunchPad,
                         ];
 
                         // two new obj
@@ -483,6 +491,15 @@ public class Game : App
                 else
                 {
                     crossedTimer = 0f;
+                }
+            }
+
+            {
+                if (CurrentState == State.Editing && Input.Keyboard.Pressed(Keys.F))
+                {
+                    foreach (Entity e in toDelete)
+                        Destroy(e);
+                    toDelete.Clear();
                 }
             }
 
@@ -521,7 +538,7 @@ public class Game : App
          PlacementKind.Fan => "icons/fan",
          PlacementKind.UpdownPlank => "icons/updownplank",
          PlacementKind.TurnPlank => "icons/turnplank",
-         PlacementKind.Slingshot => "icons/sling",
+         PlacementKind.LaunchPad => "icons/sling",
          PlacementKind.None => "icons/none",
          _ => "icons/none",
      };
@@ -533,7 +550,7 @@ public class Game : App
          PlacementKind.Fan => "Fan",
          PlacementKind.UpdownPlank => "Plank (up-down)",
          PlacementKind.TurnPlank => "Plank (turn)",
-         PlacementKind.Slingshot => "Launchpad",
+         PlacementKind.LaunchPad => "Launchpad",
          PlacementKind.None => "None",
          _ => "None",
      };
@@ -610,7 +627,7 @@ public class Game : App
 
     private void RenderSlingshotPlacementGizmo()
     {
-        Subtexture iconTexture = Atlas.Get(GetPlacementIconName(PlacementKind.Slingshot));
+        Subtexture iconTexture = Atlas.Get(GetPlacementIconName(PlacementKind.LaunchPad));
         Batch.Image(iconTexture, Input.Mouse.Position, Vector2.Zero, Vector2.One * 2, 0f, Color.White);
     }
 
@@ -641,7 +658,7 @@ public class Game : App
                         RenderUpdownPlankPlacement(); break;
                     case PlacementKind.TurnPlank:
                         RenderTurnPlankPlacement(); break;
-                    case PlacementKind.Slingshot:
+                    case PlacementKind.LaunchPad:
                         RenderSlingshotPlacement(); break;
 
                     case PlacementKind.None:
@@ -729,7 +746,7 @@ public class Game : App
                         RenderUpdownPlankPlacementGizmo(); break;
                     case PlacementKind.TurnPlank:
                         RenderTurnPlankPlacementGizmo(); break;
-                    case PlacementKind.Slingshot:
+                    case PlacementKind.LaunchPad:
                         RenderSlingshotPlacementGizmo(); break;
 
                     case PlacementKind.None:

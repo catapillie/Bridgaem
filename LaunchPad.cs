@@ -107,5 +107,11 @@ namespace Bridgaem
             Game.Batch.ImageFit(Atlas.Get("sling"), new(-w / 2, -h / 2, w, h), Vector2.Zero, Color.White, false, false);
             Game.Batch.PopMatrix();
         }
+
+        public override void Destroy()
+        {
+            base.Destroy();
+            Game.Instance.GrantPlacement(Game.PlacementKind.LaunchPad, 1);
+        }
     }
 }
