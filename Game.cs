@@ -620,6 +620,10 @@ public class Game : App
     {
         Subtexture iconTexture = Atlas.Get("fan/up1");
         Batch.ImageJustified(iconTexture, ScreenToWorld(Input.Mouse.Position), new(.5f, .5f), 0.3f, Color.White * 0.5f);
+        float offset = (float)Time.Elapsed.TotalSeconds * 5f % 1f;
+        Batch.LineDashed(
+            ScreenToWorld(Input.Mouse.Position),
+            ScreenToWorld(Input.Mouse.Position) - Vector2.UnitY * 52f, 0.2f, Color.White * 0.7f, 1f, offset);
     }
 
     private void RenderFanPlacementGizmo()
@@ -840,7 +844,7 @@ public class Game : App
             if (Player.Flipped)
             {
                 Vector2 pos = WorldToScreen(Player.ChassisPos) - new Vector2(0, 50);
-                Game.Font.Draw(Game.Batch, "Space to Unflip !", pos, new(.5f, .5f), 10, Color.White);
+                Font.Draw(Batch, "SPACE to unflip!", pos, new(.5f, .5f), 10, Color.White);
             }
         }
 
