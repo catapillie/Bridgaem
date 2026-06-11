@@ -8,11 +8,9 @@ public class Bridge : Entity
 {
     private readonly Subtexture tileTexture;
 
-    private float frictionTorque;
-    private float constraintHertz;
-    private float constraintDampingRatio;
-    private float springHertz;
-    private float springDampingRatio;
+    private readonly float frictionTorque;
+    private readonly float springHertz;
+    private readonly float springDampingRatio;
 
     private readonly B2BodyId[] bodyIds;
     private readonly B2JointId[] jointIds;
@@ -24,8 +22,6 @@ public class Bridge : Entity
         bodyIds = new B2BodyId[count];
         jointIds = new B2JointId[count + 1];
 
-        constraintHertz = 60.0f;
-        constraintDampingRatio = 0.0f;
         springHertz = 2.0f;
         springDampingRatio = 0.7f;
         frictionTorque = 200.0f;

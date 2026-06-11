@@ -23,8 +23,8 @@ public class Player : Entity
     public B2BodyId Chassis;
     public B2BodyId FrontWheel;
     public B2BodyId BackWheel;
-    private B2JointId frontwheelJointId;
-    private B2JointId backwheelJointId;
+    private readonly B2JointId frontwheelJointId;
+    private readonly B2JointId backwheelJointId;
 
     public bool Flipped;
 
@@ -192,7 +192,7 @@ public class Player : Entity
 
         if (ChassisPos.Y >= 100)
         {
-            Game.Instance.PlaySound("crash.wav");
+            // Game.Instance.PlaySound("crash.wav");
             Respawn();
         }
 

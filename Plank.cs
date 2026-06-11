@@ -7,9 +7,9 @@ namespace Bridgaem
 {
     public class Plank : PhysicsEntity
     {
-        private Vector2[] positions;
-        private float angularVelocity;
-        private float movementTime;
+        private readonly Vector2[] positions;
+        private readonly float angularVelocity;
+        private readonly float movementTime;
 
         private int currentPosIndex = 0;
         private float currentTime = 0f;

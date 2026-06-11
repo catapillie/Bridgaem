@@ -8,9 +8,9 @@ public class BridgePlatform : PhysicsEntity
 {
     private readonly Subtexture texture;
     private readonly float scale;
-    private readonly float width;
-    public readonly float Height;
     private readonly float triggerHeight;
+    public float Width { get; private set; }
+    public float Height { get; private set; }
 
     public Vector2 TargetPos { get; set; }
 
@@ -24,15 +24,12 @@ public class BridgePlatform : PhysicsEntity
         texture = Atlas.Get("bridge_platform");
         scale = 0.25f;
 
-        width = texture.Width * scale;
+        Width = texture.Width * scale;
         Height = texture.Height * scale;
         triggerHeight = Height; // {F} azy on fait égale à la vraie height
                                 // {L} a wise man once said ^
 
-        AddDefaultBox(
-            width / 2f,
-            Height / 2f,
-            friction: 0.8f);
+        AddDefaultBox(Width / 2f, Height / 2f, friction: 0.8f);
     }
 
     public override void Update()
@@ -61,7 +58,7 @@ public class BridgePlatform : PhysicsEntity
         B2Vec2 bodyPos = B2Bodies.b2Body_GetPosition(BodyId);
 
         const float widthPercent = 0.75f;
-        float w = width * widthPercent;
+        float w = Width * widthPercent;
         Rect rect = new(bodyPos.X - w / 2, bodyPos.Y - triggerHeight, w, triggerHeight);
 
         return rect.Contains(player.ChassisPos);

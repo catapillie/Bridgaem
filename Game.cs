@@ -2,16 +2,15 @@ using Box2D.NET;
 using Bridgaem.BaseEntity;
 using Bridgaem.Utility;
 using Foster.Framework;
-using FosterImGui;
 using System.Numerics;
 
 namespace Bridgaem;
 
 public class Game : App
 {
-    public static Game Instance { get; private set; }
+    public static Game Instance { get; private set; } = null!;
     public static Batcher Batch { get; private set; } = null!;
-    private readonly Renderer imRenderer;
+    private readonly ImguiRenderer imRenderer;
 
     private readonly B2WorldDef worldDef;
     public static B2WorldId WorldId { get; private set; }
@@ -28,10 +27,10 @@ public class Game : App
     public static float Zoom { get; set; } = 1.0f;
     public static float BaseZoom = 20.0f; // pixels/meter
 
-    public Player Player { get; private set; }
-    private BridgePlatform leftPlat, rightPlat;
+    public Player Player { get; private set; } = null!;
+    private BridgePlatform leftPlat = null!, rightPlat = null!;
 
-    private List<Entity> toDelete = new();
+    private readonly List<Entity> toDelete = [];
 
     public enum Direction
     {

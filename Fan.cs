@@ -18,7 +18,7 @@ public class Fan : PhysicsEntity
 
     private B2AABB windBox;
     private B2Vec2 windDir;
-    private float windSpeed = 10f;
+    private const float windSpeed = 10f;
     private readonly float w, h, range;
     public Fan(Vector2 pos, float w, float h, float range)
     {
@@ -49,7 +49,7 @@ public class Fan : PhysicsEntity
         base.Update();
 
         // TAMÈRE
-        //Find all b2shapes that are in front of the fan (so if it's rotation is 0, everything overlapping above it, if rotation is pi / 2 then to its left etc), then apply wind to them
+        // Find all b2shapes that are in front of the fan (so if it's rotation is 0, everything overlapping above it, if rotation is pi / 2 then to its left etc), then apply wind to them
 
         B2TreeStats result = B2Worlds.b2World_OverlapAABB(Game.WorldId, windBox, new B2QueryFilter(0xFFFFFFFF, 0xFFFFFFFF), (shapeid, context) =>
         {

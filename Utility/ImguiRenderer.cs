@@ -3,9 +3,9 @@ using ImGuiNET;
 using System.Diagnostics;
 using System.Numerics;
 
-namespace FosterImGui;
+namespace Bridgaem.Utility;
 
-public class Renderer : IDisposable
+public class ImguiRenderer : IDisposable
 {
     private readonly App app;
     private readonly IntPtr context;
@@ -143,7 +143,7 @@ public class Renderer : IDisposable
     /// </summary>
     public bool WantsTextInput { get; private set; }
 
-    public Renderer(App app, string? customFontPath = null)
+    public ImguiRenderer(App app, string? customFontPath = null)
     {
         this.app = app;
 
@@ -181,7 +181,7 @@ public class Renderer : IDisposable
         ImGui.SetCurrentContext(nint.Zero);
     }
 
-    ~Renderer() => Dispose();
+    ~ImguiRenderer() => Dispose();
 
     /// <summary>
     /// Begins a new ImGui Frame.
