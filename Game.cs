@@ -465,6 +465,9 @@ public class Game : App
                 }
                 else if (!hasCrossed && hasCrossedOld)
                 {
+                    // if one more second would've been enough
+                    if (crossedTimer + 1.0f >= SafeTime)
+                        Audio.Oneshot("aww");
                     crossedSource.Stop();
                 }
 
@@ -484,6 +487,7 @@ public class Game : App
                         toDelete.Clear();
                         crossedSource.Stop();
                         Audio.Oneshot("levelup");
+                        Audio.Oneshot("applause");
 
                         PlacementKind[] availableObjects = [
                             PlacementKind.Bridge, PlacementKind.Bridge, PlacementKind.Bridge,
