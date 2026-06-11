@@ -319,6 +319,7 @@ public class Game : App
             {
                 CurrentState = State.Playing;
                 Player.Respawn();
+                Player.PleaseMakeSound();
                 Audio.Oneshot("go");
                 return;
             }
@@ -436,6 +437,7 @@ public class Game : App
                 {
                     CurrentState = State.Editing;
                     Player.Respawn();
+                    Player.PleaseShutUp();
                     Audio.Oneshot("back");
                 }
             }
@@ -474,6 +476,7 @@ public class Game : App
                         crossedTimer = 0f;
                         hasCrossed = false;
                         CurrentState = State.Editing;
+                        Player.PleaseShutUp();
                         Score++;
                         scoreLerp = 1f;
                         toDelete.Clear();

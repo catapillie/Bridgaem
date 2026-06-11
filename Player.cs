@@ -2,6 +2,7 @@
 using Bridgaem.Utility;
 using Foster.Framework;
 using ImGuiNET;
+using MiniAudioEx.Core.StandardAPI;
 using System.Numerics;
 
 namespace Bridgaem;
@@ -19,6 +20,18 @@ public class Player : Entity
     private float friction = 6f;
     private float density = 0.475f;
     private float gravityScale = 4.16f;
+
+    private readonly AudioSource soundSource;
+    private const float idlePitch = 0.8f;
+    private const float movingPitch = 1f;
+    private const float movingExtraPitch = 1.25f;
+    private const float extraAccelPitchRate = 0.2f;
+    private const float accelPitchRate = 0.6f;
+    private const float decelPitchRate = 0.4f;
+    private const float extraMoveTimeThresh = 0.1f;
+    private float moveTimer = 0f;
+
+    private float bopLerp = 1f;
 
     public B2BodyId Chassis;
     public B2BodyId FrontWheel;
@@ -116,6 +129,20 @@ public class Player : Entity
         backwheelJointId = B2Joints.b2CreateWheelJoint(Game.WorldId, jointDef);
 
         ApplyPhysicsParameters();
+
+        soundSource = Audio.CreateSource();
+    }
+
+    public void PleaseMakeSound()
+    {
+        soundSource.Loop("carloop");
+        soundSource.Volume = 0.1f;
+        soundSource.Pitch = idlePitch;
+    }
+
+    public void PleaseShutUp()
+    {
+        soundSource.Stop();
     }
 
     private void ApplyPhysicsParameters()
@@ -142,8 +169,10 @@ public class Player : Entity
         base.Update();
 
         bool canInput = Game.Instance.CurrentState is Game.State.Playing;
+        bool isInput = false;
         if (Game.Instance.Input.Keyboard.Down(Keys.A) && canInput)
         {
+            isInput = true;
             B2WheelJoints.b2WheelJoint_EnableMotor(frontwheelJointId, true);
             B2WheelJoints.b2WheelJoint_SetMotorSpeed(frontwheelJointId, -speed);
             B2WheelJoints.b2WheelJoint_EnableMotor(backwheelJointId, false);
@@ -151,6 +180,7 @@ public class Player : Entity
         }
         else if (Game.Instance.Input.Keyboard.Down(Keys.D) && canInput)
         {
+            isInput = true;
             B2WheelJoints.b2WheelJoint_EnableMotor(backwheelJointId, true);
             B2WheelJoints.b2WheelJoint_SetMotorSpeed(backwheelJointId, speed);
             B2WheelJoints.b2WheelJoint_EnableMotor(frontwheelJointId, false);
@@ -196,6 +226,20 @@ public class Player : Entity
             Respawn();
         }
 
+        bopLerp = Calc.Approach(bopLerp, isInput ? 0f : 1f, Game.Dt * 2f);
+
+        if (isInput)
+            moveTimer += Game.Dt;
+        else moveTimer = 0.0f;
+
+        float targetPitch = isInput
+            ? (moveTimer >= extraMoveTimeThresh ? movingExtraPitch : movingPitch)
+            : idlePitch;
+        float approachRate = isInput
+            ? (moveTimer >= extraMoveTimeThresh ? extraAccelPitchRate : accelPitchRate)
+            : decelPitchRate;
+        soundSource.Pitch = Calc.Approach(soundSource.Pitch, targetPitch, approachRate * Game.Dt);
+
 #if DEBUG
         ImGui.Begin("Hello");
         bool changed = ImGui.SliderFloat("scale", ref scale, 0.1f, 10f);
@@ -218,9 +262,12 @@ public class Player : Entity
         B2Rot bodyRot = B2Bodies.b2Body_GetRotation(Chassis);
         float bodyAngle = float.Atan2(bodyRot.s, bodyRot.c);
         float xScale = Game.Instance.CurrentDirection is Game.Direction.Right ? +1f : -1f;
-        Game.Batch.PushMatrix(new(bodyPos.X, bodyPos.Y), new(xScale, 1.0f), bodyAngle);
+        float t = (float)Game.Instance.Time.Elapsed.TotalSeconds;
+        float bopping = 0f * float.Sin(t * 50f);
+        float yScale = 1 + 0.015f * float.Sin(t * 75f) * bopLerp;
+        Game.Batch.PushMatrix(new(bodyPos.X, bodyPos.Y), new(xScale, yScale), bodyAngle);
         {
-            Game.Batch.ImageJustified(chassisTexture, new(0f, -.4f), new(.5f, .6f), 0.2f, Color.White);
+            Game.Batch.ImageJustified(chassisTexture, new(0f, -.4f + bopping), new(.5f, .6f), 0.2f, Color.White);
         }
         Game.Batch.PopMatrix();
     }
@@ -273,5 +320,8 @@ public class Player : Entity
         B2Bodies.b2DestroyBody(Chassis);
         B2Bodies.b2DestroyBody(FrontWheel);
         B2Bodies.b2DestroyBody(BackWheel);
+
+        soundSource.Stop();
+        soundSource.Dispose();
     }
 }

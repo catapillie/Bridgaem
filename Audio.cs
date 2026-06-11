@@ -39,6 +39,14 @@ public static class Audio
     public static void Oneshot(string name)
         => globalSource.Oneshot(name);
 
+    public static void Loop(this AudioSource source, string name)
+    {
+        if (!sounds.TryGetValue(name, out var clip))
+            return;
+        source.Loop = true;
+        source.Play(clip);
+    }
+
     public static AudioSource CreateSource()
         => new()
         {
