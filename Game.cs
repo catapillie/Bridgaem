@@ -371,6 +371,11 @@ public class Game : App
             if (Input.Keyboard.Down(Keys.S))
                 Camera += Vector2.UnitY * panSpeed * Dt;
         }
+        else
+        {
+            targetZoom += Ease.Cube.InOut(crossedTimer / SafeTime) / 3f;
+        }
+
         Zoom += (targetZoom - Zoom) * float.Exp(-Dt * 100);
 
         if (CurrentState is State.Playing)
@@ -389,6 +394,7 @@ public class Game : App
 
 
                 float targetY = Player.ChassisPos.Y - 10;
+                targetY += 10f * Ease.Cube.Out(crossedTimer / SafeTime);
                 float distY = targetY - Camera.Y;
                 Camera += Vector2.UnitY * distY * float.Exp(-200 * Dt);
             }
