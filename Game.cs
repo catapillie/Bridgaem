@@ -299,7 +299,7 @@ public class Game : App
             foreach (var (k, count) in inventory)
             {
                 bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
-                if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position) && count > 0)
+                if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position) && count > 0 && placementKind != k)
                 {
                     placementKind = k;
                     Audio.Oneshot("select");
@@ -311,11 +311,23 @@ public class Game : App
             //switch to playing
             iconPos = new Vector2(Window.Width, Window.Height) - slotTex.Size * iconScale;
             bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
-            if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position))
+            if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position) || Input.Keyboard.Pressed(Keys.Enter))
             {
                 CurrentState = State.Playing;
                 Player.Respawn();
                 Audio.Oneshot("go");
+                return;
+            }
+
+            iconPos = new Vector2(Window.Width, Window.Height) - new Vector2(slotTex.Width * 2, slotTex.Height) * iconScale;
+            bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
+            if ((Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position) || Input.Keyboard.Pressed(Keys.U)) && toDelete.Any())
+            {
+                foreach (Entity e in toDelete)
+                    Destroy(e);
+                toDelete.Clear();
+                Audio.Oneshot("select");
+                Audio.Oneshot("delete"); // this is bad practice but i'm lazy to make a dedicated sound
                 return;
             }
         }
@@ -410,7 +422,7 @@ public class Game : App
                 Subtexture slotTex = Atlas.Get("icon_slot");
                 Vector2 iconPos = new Vector2(Window.Width, Window.Height) - slotTex.Size * iconScale;
                 Rect bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
-                if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position))
+                if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position) || Input.Keyboard.Pressed(Keys.Enter))
                 {
                     CurrentState = State.Editing;
                     Player.Respawn();
@@ -481,15 +493,6 @@ public class Game : App
                 else
                 {
                     crossedTimer = 0f;
-                }
-            }
-
-            {
-                if (CurrentState == State.Editing && Input.Keyboard.Pressed(Keys.F))
-                {
-                    foreach (Entity e in toDelete)
-                        Destroy(e);
-                    toDelete.Clear();
                 }
             }
 
@@ -721,6 +724,20 @@ public class Game : App
                 if (bounds.Contains(Input.Mouse.Position))
                     color = Color.White;
                 Subtexture iconTexture = Atlas.Get("icons/go");
+                Batch.Image(slotTex, iconPos, Vector2.Zero, Vector2.One * iconScale, 0f, color);
+                Batch.Image(iconTexture, iconPos, Vector2.Zero, Vector2.One * iconScale, 0f, color);
+            }
+
+            // delete icon
+            {
+                iconPos = new Vector2(Window.Width, Window.Height) - new Vector2(slotTex.Width * 2, slotTex.Height) * iconScale;
+                Rect bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
+                Color color = Color.White * 0.8f;
+                if (!toDelete.Any())
+                    color = Color.Red * 0.5f;
+                else if (bounds.Contains(Input.Mouse.Position))
+                    color = Color.White;
+                Subtexture iconTexture = Atlas.Get("icons/delete");
                 Batch.Image(slotTex, iconPos, Vector2.Zero, Vector2.One * iconScale, 0f, color);
                 Batch.Image(iconTexture, iconPos, Vector2.Zero, Vector2.One * iconScale, 0f, color);
             }
