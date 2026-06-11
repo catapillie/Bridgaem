@@ -3,7 +3,6 @@ using Bridgaem.BaseEntity;
 using Bridgaem.Utility;
 using Foster.Framework;
 using FosterImGui;
-using SoLoud;
 using System.Numerics;
 
 namespace Bridgaem;
@@ -74,8 +73,6 @@ public class Game : App
 
     public State CurrentState { get; set; } = State.Editing;
 
-    SoLoud.Soloud soloud = new();
-
 
     public Game() : base(new AppConfig()
     {
@@ -97,9 +94,6 @@ public class Game : App
 
         Font = new SpriteFont(GraphicsDevice,
             new Font("assets/font/archivo_black.ttf"), 200f);
-
-        soloud.init();
-        soloud.setGlobalVolume(0.5f);
     }
 
     public void GrantPlacement(PlacementKind kind, int count)
@@ -117,13 +111,6 @@ public class Game : App
             inventory[kind]--;
             toDelete.Add(createdEntity);
         }
-    }
-
-    public void PlaySound(string path)
-    {
-        Wav sfx = new Wav();
-        sfx.load("./assets/sound/" + path);
-        soloud.play(sfx);
     }
 
     protected override void Startup()
@@ -198,7 +185,6 @@ public class Game : App
     protected override void Shutdown()
     {
         imRenderer.Dispose();
-        soloud.deinit();
     }
 
     public static void Instantiate(Entity entity)
@@ -322,7 +308,6 @@ public class Game : App
             bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
             if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position))
             {
-                PlaySound("go.wav");
                 CurrentState = State.Playing;
                 Player.Respawn();
                 return;
@@ -422,7 +407,6 @@ public class Game : App
                 if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position))
                 {
                     CurrentState = State.Editing;
-                    PlaySound("back.wav");
                     Player.Respawn();
                 }
             }
@@ -452,7 +436,6 @@ public class Game : App
                         hasCrossed = false;
                         CurrentState = State.Editing;
                         Score++;
-                        PlaySound("levelup.wav");
                         scoreLerp = 1f;
                         toDelete.Clear();
 
