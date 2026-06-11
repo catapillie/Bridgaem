@@ -3,6 +3,7 @@ using Bridgaem.Entities;
 using Bridgaem.Utility;
 using Foster.Framework;
 using MiniAudioEx.Core.StandardAPI;
+using System.Diagnostics;
 using System.Numerics;
 
 namespace Bridgaem;
@@ -17,6 +18,7 @@ public class Game : App
     public static B2WorldId WorldId { get; private set; }
 
     private static readonly List<Entity> entities = [];
+    private static readonly List<Entity> toDestroy = [];
 
     private const int fps = 60;
     private const float physicsDt = 1.0f / fps;
@@ -45,7 +47,7 @@ public class Game : App
     private float crossedTimer = 0.0f;
     private bool hasCrossed = false;
     private AudioSource crossedSource = null!;
-
+    private float lastLevelupTimer = float.NegativeInfinity;
 
     public enum PlacementKind
     {
@@ -199,8 +201,7 @@ public class Game : App
 
     public static void Destroy(Entity entity)
     {
-        entity.Destroy();
-        entities.Remove(entity);
+        toDestroy.Add(entity);
     }
 
     private Vector2 bridgePlacementLeft, bridgePlacementRight;
@@ -478,6 +479,7 @@ public class Game : App
                         CurrentState = State.Editing;
                         Player.PleaseShutUp();
                         Score++;
+                        lastLevelupTimer = 0f;
                         scoreLerp = 1f;
                         toDelete.Clear();
                         crossedSource.Stop();
@@ -520,6 +522,21 @@ public class Game : App
                 }
             }
 
+            const float confettiDelay = 0.6f;
+            float oldLastLevelupTimer = lastLevelupTimer;
+            lastLevelupTimer += Dt;
+            if (lastLevelupTimer >= confettiDelay && oldLastLevelupTimer < confettiDelay)
+            {
+                Vector2 pos = CurrentDirection switch
+                {
+                    Direction.Left => rightPlat.TargetPos,
+                    Direction.Right => leftPlat.TargetPos,
+                    _ => throw new UnreachableException(),
+                };
+
+                for (int i = 0; i < 60; i++)
+                    Instantiate(new Confetti(pos));
+            }
 
             B2Worlds.b2World_Step(WorldId, physicsDt, physicsSubsteps);
 
@@ -530,6 +547,13 @@ public class Game : App
 
             imRenderer.EndLayout();
         }
+
+        foreach (var e in toDestroy)
+        {
+            e.Destroy();
+            entities.Remove(e);
+        }
+        toDestroy.Clear();
     }
 
     private Vector2 ScreenToWorld(Vector2 pos)
