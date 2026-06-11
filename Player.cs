@@ -168,7 +168,7 @@ public class Player : Entity
 
         B2Rot r = B2Bodies.b2Body_GetRotation(Chassis);
 
-        Vector2 up = new Vector2(-r.s, r.c);
+        Vector2 up = new(-r.s, r.c);
         B2ContactData[] contactData = new B2ContactData[1];
         int contactCount = B2Bodies.b2Body_GetContactData(Chassis, contactData, 1);
 
@@ -181,7 +181,7 @@ public class Player : Entity
                 B2Bodies.b2Body_ApplyLinearImpulseToCenter(Chassis, new B2Vec2(0, -120), true);
                 B2Bodies.b2Body_ApplyAngularImpulse(Chassis, 200f, true);
 
-                // Game.Instance.PlaySound("flip.wav");
+                Audio.Oneshot("flip");
             }
         }
         else
@@ -192,7 +192,7 @@ public class Player : Entity
 
         if (ChassisPos.Y >= 100)
         {
-            // Game.Instance.PlaySound("crash.wav");
+            Audio.Oneshot("crash");
             Respawn();
         }
 

@@ -115,6 +115,7 @@ public class Game : App
     protected override void Startup()
     {
         Atlas.Load(GraphicsDevice);
+        Audio.Load();
 
         {
             // bg
@@ -184,6 +185,7 @@ public class Game : App
     protected override void Shutdown()
     {
         imRenderer.Dispose();
+        Audio.Unload();
     }
 
     public static void Instantiate(Entity entity)
@@ -203,7 +205,8 @@ public class Game : App
     {
         if (isPlacingBridge)
         {
-            const float maxLength = 30f;
+            const float minLength = 2.0f;
+            const float maxLength = 30.0f;
             bridgePlacementRight = ScreenToWorld(Input.Mouse.Position);
             Vector2 diff = bridgePlacementRight - bridgePlacementLeft;
             float d = float.Clamp(diff.Length(), 0.0f, maxLength);
@@ -212,6 +215,8 @@ public class Game : App
                 Vector2 dir = diff.Normalized();
                 bridgePlacementRight = bridgePlacementLeft + dir * d;
             }
+            else
+                return;
 
 
             if (!Input.Mouse.LeftDown)
@@ -219,9 +224,12 @@ public class Game : App
                 float len = Vector2.Distance(bridgePlacementLeft, bridgePlacementRight);
                 int tileCount = 1 + (int)len * 2;
                 Bridge bridge;
-                Instantiate(bridge = new Bridge(bridgePlacementLeft, bridgePlacementRight, tileCount));
+                if (d >= minLength)
+                {
+                    Instantiate(bridge = new Bridge(bridgePlacementLeft, bridgePlacementRight, tileCount));
+                    UsePlacement(PlacementKind.Bridge, bridge);
+                }
                 isPlacingBridge = false;
-                UsePlacement(PlacementKind.Bridge, bridge);
                 return;
             }
 
@@ -255,7 +263,6 @@ public class Game : App
         }
     }
 
-
     private void TurnPlankPlacement()
     {
         if (Input.Mouse.LeftPressed)
@@ -266,8 +273,6 @@ public class Game : App
             UsePlacement(PlacementKind.TurnPlank, plank);
         }
     }
-
-
 
     private void SlingshotPlacement()
     {
@@ -297,6 +302,7 @@ public class Game : App
                 if (Input.Mouse.LeftPressed && bounds.Contains(Input.Mouse.Position) && count > 0)
                 {
                     placementKind = k;
+                    Audio.Oneshot("select");
                     return;
                 }
                 iconPos += Vector2.UnitY * slotTex.Height * iconScale;
@@ -309,6 +315,7 @@ public class Game : App
             {
                 CurrentState = State.Playing;
                 Player.Respawn();
+                Audio.Oneshot("go");
                 return;
             }
         }
@@ -407,6 +414,7 @@ public class Game : App
                 {
                     CurrentState = State.Editing;
                     Player.Respawn();
+                    Audio.Oneshot("back");
                 }
             }
         }
@@ -437,7 +445,7 @@ public class Game : App
                         Score++;
                         scoreLerp = 1f;
                         toDelete.Clear();
-
+                        Audio.Oneshot("levelup");
 
                         PlacementKind[] availableObjects = [
                             PlacementKind.Bridge, PlacementKind.Bridge, PlacementKind.Bridge,
