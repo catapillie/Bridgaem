@@ -534,6 +534,7 @@ public class Game : App
                     _ => throw new UnreachableException(),
                 };
 
+                Audio.Oneshot("pop");
                 for (int i = 0; i < 60; i++)
                     Instantiate(new Confetti(pos));
             }
