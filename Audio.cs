@@ -9,15 +9,12 @@ public static class Audio
 
     private const string soundsPrefix = "./assets/sound/";
     private static readonly Dictionary<string, AudioClip> sounds = [];
-    private static AudioSource source = null!;
+    private static AudioSource globalSource = null!;
 
     internal static void Load()
     {
         AudioContext.Initialize(SAMPLE_RATE, NUM_CHANNELS);
-        source = new()
-        {
-            Volume = 0.25f,
-        };
+        globalSource = CreateSource();
 
         foreach (var path in Directory.EnumerateFiles(soundsPrefix, "*.*", searchOption: SearchOption.AllDirectories))
         {
@@ -32,11 +29,19 @@ public static class Audio
         AudioContext.Deinitialize();
     }
 
-    public static void Oneshot(string name)
+    public static void Oneshot(this AudioSource source, string name)
     {
         if (!sounds.TryGetValue(name, out var clip))
             return;
-
         source.PlayOneShot(clip);
     }
+
+    public static void Oneshot(string name)
+        => globalSource.Oneshot(name);
+
+    public static AudioSource CreateSource()
+        => new()
+        {
+            Volume = 0.25f,
+        };
 }

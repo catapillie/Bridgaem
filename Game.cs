@@ -2,6 +2,7 @@ using Box2D.NET;
 using Bridgaem.BaseEntity;
 using Bridgaem.Utility;
 using Foster.Framework;
+using MiniAudioEx.Core.StandardAPI;
 using System.Numerics;
 
 namespace Bridgaem;
@@ -43,6 +44,7 @@ public class Game : App
     private const float SafeTime = 2f;
     private float crossedTimer = 0.0f;
     private bool hasCrossed = false;
+    private AudioSource crossedSource = null!;
 
 
     public enum PlacementKind
@@ -116,6 +118,8 @@ public class Game : App
     {
         Atlas.Load(GraphicsDevice);
         Audio.Load();
+
+        crossedSource = Audio.CreateSource();
 
         {
             // bg
@@ -444,12 +448,22 @@ public class Game : App
         {
             if (Player is not null)
             {
+                bool hasCrossedOld = hasCrossed;
                 hasCrossed = CurrentDirection switch
                 {
                     Direction.Right => rightPlat.IsDetected(Player),
                     Direction.Left => leftPlat.IsDetected(Player),
                     _ => false,
                 };
+
+                if (hasCrossed && !hasCrossedOld)
+                {
+                    crossedSource.Oneshot("timer");
+                }
+                else if (!hasCrossed && hasCrossedOld)
+                {
+                    crossedSource.Stop();
+                }
 
                 if (hasCrossed)
                 {
@@ -463,6 +477,7 @@ public class Game : App
                         Score++;
                         scoreLerp = 1f;
                         toDelete.Clear();
+                        crossedSource.Stop();
                         Audio.Oneshot("levelup");
 
                         PlacementKind[] availableObjects = [
