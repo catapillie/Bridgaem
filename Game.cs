@@ -1,5 +1,5 @@
 using Box2D.NET;
-using Bridgaem.BaseEntity;
+using Bridgaem.Entities;
 using Bridgaem.Utility;
 using Foster.Framework;
 using MiniAudioEx.Core.StandardAPI;

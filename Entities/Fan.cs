@@ -2,7 +2,7 @@
 using Foster.Framework;
 using System.Numerics;
 
-namespace Bridgaem;
+namespace Bridgaem.Entities;
 
 public class Fan : PhysicsEntity
 {

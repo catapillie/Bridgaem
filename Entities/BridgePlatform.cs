@@ -2,7 +2,7 @@ using Box2D.NET;
 using Foster.Framework;
 using System.Numerics;
 
-namespace Bridgaem;
+namespace Bridgaem.Entities;
 
 public class BridgePlatform : PhysicsEntity
 {

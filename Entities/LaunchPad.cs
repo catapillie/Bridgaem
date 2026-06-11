@@ -3,7 +3,7 @@ using Bridgaem.Utility;
 using Foster.Framework;
 using System.Numerics;
 
-namespace Bridgaem;
+namespace Bridgaem.Entities;
 
 public class LaunchPad : PhysicsEntity
 {

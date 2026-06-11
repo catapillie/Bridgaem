@@ -5,7 +5,7 @@ using ImGuiNET;
 using MiniAudioEx.Core.StandardAPI;
 using System.Numerics;
 
-namespace Bridgaem;
+namespace Bridgaem.Entities;
 
 public class Player : Entity
 {
