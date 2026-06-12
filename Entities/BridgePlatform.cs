@@ -1,5 +1,6 @@
 using Box2D.NET;
 using Foster.Framework;
+using System.Diagnostics;
 using System.Numerics;
 
 namespace Bridgaem.Entities;
@@ -14,14 +15,19 @@ public class BridgePlatform : PhysicsEntity
 
     public Vector2 TargetPos { get; set; }
 
-    public BridgePlatform(Vector2 pos)
+    public BridgePlatform(Vector2 pos, Game.Direction dir)
     {
         TargetPos = pos;
 
         B2Bodies.b2Body_SetTransform(BodyId, new B2Vec2(pos.X, pos.Y), B2MathFunction.b2MakeRot(0.0f));
         B2Bodies.b2Body_SetType(BodyId, B2BodyType.b2_kinematicBody);
 
-        texture = Atlas.Get("bridge_platform");
+        texture = Atlas.Get(dir switch
+        {
+            Game.Direction.Left => "bridge_platform_left",
+            Game.Direction.Right => "bridge_platform_right",
+            _ => throw new UnreachableException(),
+        });
         scale = 0.25f;
 
         Width = texture.Width * scale;

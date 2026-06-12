@@ -186,8 +186,8 @@ public class Game : App
                 }
             }
         }
-        Instantiate(leftPlat = new BridgePlatform(new(0, 40)));
-        Instantiate(rightPlat = new BridgePlatform(new(40, 40)));
+        Instantiate(leftPlat = new BridgePlatform(new(0, 40), Direction.Left));
+        Instantiate(rightPlat = new BridgePlatform(new(40, 40), Direction.Right));
 
         Vector2 playerPosition = B2Bodies.b2Body_GetPosition(leftPlat.BodyId).ToVector2() - new Vector2(0, leftPlat.Height / 2 + 5);
         Instantiate(Player = new Player(playerPosition));
