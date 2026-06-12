@@ -73,16 +73,26 @@ public class Game : App
         Playing,
         Editing,
     }
-
     public State CurrentState { get; set; } = State.Editing;
 
+    private enum WindupAlert
+    {
+        Left,
+        Right,
+        UpMild,
+        UpSevere,
+        Down,
+    }
+    private WindupAlert windupAlert = WindupAlert.Left;
+    private float windupAlertLerp = 0.0f;
 
     public Game() : base(new AppConfig()
     {
         ApplicationName = "Bridgaem",
         WindowTitle = "WESH BRIDGE",
         Width = 1280,
-        Height = 720,
+        Height = 750,
+        Resizable = true,
         UpdateMode = UpdateMode.FixedStep(fps),
     })
     {
@@ -416,11 +426,19 @@ public class Game : App
         UpdateCamera();
 
         scoreLerp = Calc.Approach(scoreLerp, 0f, Dt);
+        windupAlertLerp = Calc.Approach(windupAlertLerp, 0f, Dt * 1.5f);
 
 #if DEBUG
         if (Input.Keyboard.Down(Keys.Escape))
             Exit();
+
+        if (Input.Mouse.RightPressed)
+        {
+            Player.RespawnPos = ScreenToWorld(Input.Mouse.Position);
+            Player.Respawn();
+        }
 #endif
+
 
         if (CurrentState is State.Editing)
         {
@@ -503,17 +521,97 @@ public class Game : App
                         if (Score <= 10)
                             GrantPlacement(availableObjects[Random.Shared.Next(availableObjects.Length)], 1);
 
+                        Vector2 rise = Vector2.Zero;
+                        float xOffsetFactor = 1.0f;
+                        if (Score <= 2)
+                        {
+                            windupAlert = CurrentDirection switch
+                            {
+                                Direction.Right => WindupAlert.Left,
+                                Direction.Left => WindupAlert.Right,
+                                _ => throw new UnreachableException(),
+                            };
+                        }
+                        else if (Score < 5 && Utils.Chance(0.50f))
+                        {
+                            rise.Y -= 20f;
+                            windupAlert = WindupAlert.UpMild;
+                            xOffsetFactor = Random.Shared.NextSingle() - 0.5f;
+                        }
+                        else if (Score < 10 && Utils.Chance(0.50f))
+                        {
+                            if (Utils.Chance(0.60f))
+                            {
+                                rise.Y -= 20f;
+                                windupAlert = WindupAlert.UpMild;
+                                xOffsetFactor = 2f * (Random.Shared.NextSingle() - 0.6f);
+                            }
+                            else
+                            {
+                                if (Utils.Chance(0.30f))
+                                {
+                                    rise.Y += 40;
+                                    windupAlert = WindupAlert.Down;
+                                    xOffsetFactor = -Random.Shared.NextSingle();
+                                }
+                                else
+                                {
+                                    rise.Y -= 40f;
+                                    windupAlert = WindupAlert.UpSevere;
+                                    xOffsetFactor = 2.5f * (Random.Shared.NextSingle() - 0.8f);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (Utils.Chance(0.60f))
+                            {
+                                if (Utils.Chance(0.30f))
+                                {
+                                    rise.Y += 40;
+                                    windupAlert = WindupAlert.Down;
+                                    xOffsetFactor = -Random.Shared.NextSingle();
+
+                                }
+                                else
+                                {
+                                    if (Utils.Chance(0.50f))
+                                    {
+                                        rise.Y -= 20f;
+                                        windupAlert = WindupAlert.UpMild;
+                                        xOffsetFactor = 3.0f * (Random.Shared.NextSingle() - 0.9f);
+                                    }
+                                    else
+                                    {
+                                        rise.Y -= 50f;
+                                        windupAlert = WindupAlert.UpSevere;
+                                        xOffsetFactor = 3.0f * (Random.Shared.NextSingle() - 0.9f);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                windupAlert = CurrentDirection switch
+                                {
+                                    Direction.Right => WindupAlert.Left,
+                                    Direction.Left => WindupAlert.Right,
+                                    _ => throw new UnreachableException(),
+                                };
+                            }
+                        }
 
                         switch (CurrentDirection)
                         {
                             case Direction.Right:
                                 CurrentDirection = Direction.Left;
-                                leftPlat.TargetPos -= Vector2.UnitX * 40;
+                                leftPlat.TargetPos -= Vector2.UnitX * 40 * xOffsetFactor;
+                                leftPlat.TargetPos += rise;
                                 Player.RespawnPos = B2Bodies.b2Body_GetPosition(rightPlat.BodyId).ToVector2() - new Vector2(0, rightPlat.Height / 2 + 5);
                                 break;
                             case Direction.Left:
                                 CurrentDirection = Direction.Right;
-                                rightPlat.TargetPos += Vector2.UnitX * 40;
+                                rightPlat.TargetPos += Vector2.UnitX * 40 * xOffsetFactor;
+                                rightPlat.TargetPos += rise;
                                 Player.RespawnPos = B2Bodies.b2Body_GetPosition(leftPlat.BodyId).ToVector2() - new Vector2(0, leftPlat.Height / 2 + 5);
                                 break;
                             default: break;
@@ -526,10 +624,13 @@ public class Game : App
                 }
             }
 
-            const float confettiDelay = 0.6f;
             float oldLastLevelupTimer = lastLevelupTimer;
             lastLevelupTimer += Dt;
-            if (lastLevelupTimer >= confettiDelay && oldLastLevelupTimer < confettiDelay)
+            bool HasWaited(float delay)
+                => lastLevelupTimer >= delay && oldLastLevelupTimer < delay;
+
+            const float confettiDelay = 0.6f;
+            if (HasWaited(confettiDelay))
             {
                 Vector2 pos = CurrentDirection switch
                 {
@@ -542,6 +643,46 @@ public class Game : App
                 for (int i = 0; i < 60; i++)
                     Instantiate(new Confetti(pos));
             }
+
+            const float alertDelay = 1.0f;
+            const float calmBeepDelay = 0.844f; // transient delay in alert0.wav
+            const float beepDelay = 0.325f; // transient delay in alert1.wav / alert2.wav
+            const float downBeepDelay = 0.323f; // transient delay in alert2.wav
+            switch (windupAlert)
+            {
+                case WindupAlert.Left:
+                case WindupAlert.Right:
+                    if (HasWaited(alertDelay)) Audio.Oneshot("alert0");
+                    if (HasWaited(alertDelay + calmBeepDelay * 0)) windupAlertLerp = 1.0f;
+                    if (HasWaited(alertDelay + calmBeepDelay * 1)) windupAlertLerp = 1.0f;
+                    break;
+
+                case WindupAlert.UpMild:
+                    if (HasWaited(alertDelay)) Audio.Oneshot("alert1");
+                    if (HasWaited(alertDelay + beepDelay * 0)) windupAlertLerp = 1.0f;
+                    if (HasWaited(alertDelay + beepDelay * 1)) windupAlertLerp = 1.0f;
+                    if (HasWaited(alertDelay + beepDelay * 2)) windupAlertLerp = 1.0f;
+                    break;
+
+                case WindupAlert.UpSevere:
+                    if (HasWaited(alertDelay)) Audio.Oneshot("alert2");
+                    if (HasWaited(alertDelay + beepDelay * 0)) windupAlertLerp = 1.0f;
+                    if (HasWaited(alertDelay + beepDelay * 1)) windupAlertLerp = 1.0f;
+                    if (HasWaited(alertDelay + beepDelay * 2)) windupAlertLerp = 1.0f;
+                    if (HasWaited(alertDelay + beepDelay * 3)) windupAlertLerp = 1.0f;
+                    break;
+
+                case WindupAlert.Down:
+                    if (HasWaited(alertDelay)) Audio.Oneshot("alert3");
+                    if (HasWaited(alertDelay + downBeepDelay * 0)) windupAlertLerp = 1.0f;
+                    if (HasWaited(alertDelay + downBeepDelay * 1)) windupAlertLerp = 1.0f;
+                    if (HasWaited(alertDelay + downBeepDelay * 2)) windupAlertLerp = 1.0f;
+                    break;
+
+                default:
+                    break;
+            }
+
 
             B2Worlds.b2World_Step(WorldId, physicsDt, physicsSubsteps);
 
@@ -741,10 +882,8 @@ public class Game : App
             // back icon
             {
                 iconPos = new Vector2(Window.Width, Window.Height - slotTex.Size.Y * 3) - slotTex.Size * iconScale;
-                Rect bounds = new(iconPos, slotTex.Width * iconScale, slotTex.Height * iconScale);
                 Color color = Color.White;
                 Subtexture iconTexture = Atlas.Get("icons/camera");
-                //Batch.Image(slotTex, iconPos, Vector2.Zero, Vector2.One * iconScale, 0f, color);
                 Batch.Image(iconTexture, iconPos, Vector2.Zero, Vector2.One * iconScale, 0f, color);
             }
         }
@@ -846,6 +985,24 @@ public class Game : App
                 Vector2 pos = WorldToScreen(Player.ChassisPos) - new Vector2(0, 50);
                 Font.Draw(Batch, "SPACE to unflip!", pos, new(.5f, .5f), 10, Color.White);
             }
+        }
+
+        // windup alert icon
+        {
+            Subtexture? icon = windupAlert switch
+            {
+                WindupAlert.Left => Atlas.Get("warn_left"),
+                WindupAlert.Right => Atlas.Get("warn_right"),
+                WindupAlert.UpMild => Atlas.Get("warn_up_mild"),
+                WindupAlert.UpSevere => Atlas.Get("warn_up_severe"),
+                WindupAlert.Down => Atlas.Get("warn_down"),
+                _ => null,
+            };
+
+            if (icon is { } tex && windupAlertLerp > 0.0f)
+                Batch.ImageJustified(tex,
+                    new(Window.Width / 2f, Window.Height * 0.75f),
+                    new(0.5f, 0.5f), 5f, Color.White * windupAlertLerp);
         }
 
         Batch.Render(Window);

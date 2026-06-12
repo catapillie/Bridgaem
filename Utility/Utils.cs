@@ -81,5 +81,8 @@ public static class Utils
 
         Game.Batch.Circle(new Circle(0, 0, circle.radius), 300, color);
     }
+
+    public static bool Chance(float percent)
+        => Random.Shared.NextSingle() <= percent;
 }
 
